@@ -28,7 +28,11 @@ const uploadSchema = z.object({
 photoRoutes.post('/upload-url', requireAuth, async (c) => {
   const { userId } = getAuth(c);
   const body = await c.req.json();
-  const data = uploadSchema.parse(body);
+  const parsed = uploadSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors }, 400);
+  }
+  const data = parsed.data;
 
   const trip = await prisma.trip.findUnique({ where: { id: data.tripId } });
   if (!trip) return c.json({ error: 'Trip not found' }, 404);
@@ -81,12 +85,16 @@ photoRoutes.patch('/:id', requireAuth, async (c) => {
   if (photo.trip.userId !== userId) return c.json({ error: 'Forbidden' }, 403);
 
   const body = await c.req.json();
-  const data = z
+  const parsed = z
     .object({
       caption: z.string().max(500).optional(),
       sortOrder: z.number().int().min(1).optional(),
     })
-    .parse(body);
+    .safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors }, 400);
+  }
+  const data = parsed.data;
 
   const updated = await prisma.tripPhoto.update({
     where: { id: photoId },

@@ -1,0 +1,112 @@
+version: "3.9"
+
+# =============================================================================
+# Travel Checker — Local Development
+#
+# Start everything:  docker compose up --build
+# Stop:              docker compose down
+# Reset DB:          docker compose down -v && docker compose up --build
+# Logs:              docker compose logs -f api
+#
+# Services:
+#   - API:     http://localhost:3001       (Hono + Prisma)
+#   - Health:  http://localhost:3001/health
+#   - DB:      localhost:5432              (PostgreSQL 16)
+#   - pgAdmin: http://localhost:5050       (admin@local.dev / admin)
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # API — development mode with hot reload
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.dev
+    container_name: tc-api
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/travel_checker
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-sk_test_placeholder}
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-}
+      R2_ENDPOINT: ${R2_ENDPOINT:-https://placeholder.r2.cloudflarestorage.com}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-placeholder}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-placeholder}
+      R2_BUCKET: ${R2_BUCKET:-travel-checker-photos}
+      R2_CDN_URL: ${R2_CDN_URL:-http://localhost:3001/static}
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+      - ./packages/shared/src:/app/packages/shared/src
+      - ./prisma:/app/prisma
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - tc-net
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 16
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: tc-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: travel_checker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - tc_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d travel_checker"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+      start_period: 5s
+    networks:
+      - tc-net
+
+  # ---------------------------------------------------------------------------
+  # pgAdmin — database GUI (optional, comment out if not needed)
+  # ---------------------------------------------------------------------------
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: tc-pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@local.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    volumes:
+      - tc_pgadmin:/var/lib/pgadmin
+      - ./infra/docker/pgadmin-servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - tc-net
+
+volumes:
+  tc_pgdata:
+    driver: local
+  tc_pgadmin:
+    driver: local
+
+networks:
+  tc-net:
+    driver: bridge

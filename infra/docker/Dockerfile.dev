@@ -1,0 +1,36 @@
+# =============================================================================
+# Travel Checker API — Development Dockerfile
+# Hot reload via tsx watch, auto-migration on startup
+# =============================================================================
+FROM node:20-alpine
+
+RUN apk add --no-cache python3 make g++ openssl openssl-dev
+
+WORKDIR /app
+
+# Copy workspace manifests
+COPY package.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY apps/api/package.json ./apps/api/
+
+# Copy prisma schema (needed for prisma generate)
+COPY prisma ./prisma/
+
+# Install ALL dependencies (including devDependencies for tsx)
+RUN npm install --workspace=apps/api --workspace=packages/shared --include-workspace-root
+
+# Generate Prisma client
+RUN npx prisma generate --schema=prisma/schema.prisma
+
+# Copy all source code
+COPY packages/shared ./packages/shared/
+COPY apps/api ./apps/api/
+COPY tsconfig.json ./
+
+# Copy entrypoint
+COPY infra/docker/entrypoint.dev.sh ./entrypoint.dev.sh
+RUN chmod +x ./entrypoint.dev.sh
+
+EXPOSE 3001
+
+ENTRYPOINT ["./entrypoint.dev.sh"]

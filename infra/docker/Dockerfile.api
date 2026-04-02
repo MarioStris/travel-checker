@@ -3,8 +3,8 @@
 # =============================================================================
 FROM node:20-alpine AS builder
 
-# Install build dependencies for native modules
-RUN apk add --no-cache python3 make g++
+# Install build dependencies for native modules + OpenSSL for Prisma
+RUN apk add --no-cache python3 make g++ openssl openssl-dev
 
 WORKDIR /app
 
@@ -35,6 +35,9 @@ RUN npm run build --workspace=apps/api
 # =============================================================================
 FROM node:20-alpine AS runtime
 
+# OpenSSL needed for Prisma runtime
+RUN apk add --no-cache openssl
+
 # Security: run as non-root user
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S appuser -u 1001 -G nodejs
@@ -58,6 +61,10 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/prisma ./prisma
 
+# Copy entrypoint
+COPY infra/docker/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 # Set ownership
 RUN chown -R appuser:nodejs /app
 
@@ -70,5 +77,5 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
     CMD wget -qO- http://localhost:3001/health || exit 1
 
-# Start the compiled server
-CMD ["node", "apps/api/dist/index.js"]
+# Auto-migrate and start
+ENTRYPOINT ["./entrypoint.sh"]

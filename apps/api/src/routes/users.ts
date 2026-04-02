@@ -48,7 +48,11 @@ const avatarUploadSchema = z.object({
 // POST /api/users/sync — Clerk webhook to create/update user
 userRoutes.post('/sync', async (c) => {
   const body = await c.req.json();
-  const data = syncUserSchema.parse(body);
+  const parsed = syncUserSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors }, 400);
+  }
+  const data = parsed.data;
   const user = await syncUser(prisma, data);
   return c.json(user, 201);
 });
@@ -57,7 +61,11 @@ userRoutes.post('/sync', async (c) => {
 userRoutes.post('/me/avatar', requireAuth, async (c) => {
   const { userId } = getAuth(c);
   const body = await c.req.json();
-  const data = avatarUploadSchema.parse(body);
+  const parsed = avatarUploadSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors }, 400);
+  }
+  const data = parsed.data;
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -108,7 +116,11 @@ userRoutes.get('/me', requireAuth, async (c) => {
 userRoutes.patch('/me', requireAuth, async (c) => {
   const { userId } = getAuth(c);
   const body = await c.req.json();
-  const data = updateProfileSchema.parse(body);
+  const parsed = updateProfileSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors }, 400);
+  }
+  const data = parsed.data;
 
   if (data.username) {
     const existing = await prisma.user.findUnique({ where: { username: data.username } });
@@ -191,6 +203,7 @@ userRoutes.get('/:id', requireAuth, async (c) => {
   if (!user) return c.json({ error: 'User not found' }, 404);
   if (!user.isPublic) return c.json({ error: 'This profile is private' }, 403);
 
-  return c.json(user);
+  const { email, clerkId, avatarR2Key, ...publicProfile } = user as Record<string, unknown>;
+  return c.json(publicProfile);
 });
 

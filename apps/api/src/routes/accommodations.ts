@@ -23,7 +23,11 @@ accommodationRoutes.put('/:id/accommodation', requireAuth, async (c) => {
   if (trip.userId !== userId) return c.json({ error: 'Forbidden' }, 403);
 
   const body = await c.req.json();
-  const data = upsertAccommodationSchema.parse(body);
+  const parsed = upsertAccommodationSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors }, 400);
+  }
+  const data = parsed.data;
 
   const accommodation = await prisma.accommodation.upsert({
     where: { tripId },
@@ -68,5 +72,5 @@ accommodationRoutes.delete('/:id/accommodation', requireAuth, async (c) => {
 
   await prisma.accommodation.delete({ where: { tripId } });
 
-  return c.json({ data: null }, 204);
+  return c.body(null, 204);
 });

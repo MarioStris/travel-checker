@@ -81,7 +81,11 @@ tripRoutes.get('/', requireAuth, async (c) => {
 tripRoutes.post('/', requireAuth, async (c) => {
   const { userId } = getAuth(c);
   const body = await c.req.json();
-  const data = createTripSchema.parse(body);
+  const parsed = createTripSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors }, 400);
+  }
+  const data = parsed.data;
 
   const trip = await prisma.$transaction(async (tx) => {
     const newTrip = await tx.trip.create({
@@ -161,7 +165,11 @@ tripRoutes.patch('/:id', requireAuth, async (c) => {
   if (existing.userId !== userId) return c.json({ error: 'Forbidden' }, 403);
 
   const body = await c.req.json();
-  const data = updateTripSchema.parse(body);
+  const parsed = updateTripSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors }, 400);
+  }
+  const data = parsed.data;
 
   const trip = await prisma.$transaction(async (tx) => {
     const updated = await tx.trip.update({
