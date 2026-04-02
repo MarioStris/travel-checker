@@ -1,0 +1,92 @@
+appId: com.travelchecker.app
+name: "Map View — Pins, Tap, Navigate to Detail"
+tags:
+  - map
+  - navigation
+
+---
+
+# Test 1: Map tab is accessible and renders
+- launchApp
+- tapOn:
+    id: "tab-map"
+- assertVisible:
+    id: "mapView"
+- waitForAnimationToEnd
+- takeScreenshot: "01_map_loaded"
+
+---
+
+# Test 2: Map shows trip pins for current user
+- launchApp
+- tapOn:
+    id: "tab-map"
+- waitForAnimationToEnd
+# Verify at least one pin is visible (assumes seeded test data)
+- assertVisible:
+    id: "mapPin"
+- takeScreenshot: "02_map_pins_visible"
+
+---
+
+# Test 3: Tap pin shows trip preview callout
+- launchApp
+- tapOn:
+    id: "tab-map"
+- waitForAnimationToEnd
+- tapOn:
+    id: "mapPin"
+    index: 0
+- waitForAnimationToEnd
+- assertVisible:
+    id: "pinCallout"
+- takeScreenshot: "03_pin_callout_shown"
+
+---
+
+# Test 4: Tap callout navigates to trip detail
+- launchApp
+- tapOn:
+    id: "tab-map"
+- waitForAnimationToEnd
+- tapOn:
+    id: "mapPin"
+    index: 0
+- waitForAnimationToEnd
+- tapOn:
+    id: "pinCallout"
+- assertVisible:
+    id: "tripDetailScreen"
+- takeScreenshot: "04_navigated_to_trip_detail"
+
+---
+
+# Test 5: Back navigation from trip detail returns to map
+- launchApp
+- tapOn:
+    id: "tab-map"
+- waitForAnimationToEnd
+- tapOn:
+    id: "mapPin"
+    index: 0
+- waitForAnimationToEnd
+- tapOn:
+    id: "pinCallout"
+- tapOn:
+    id: "backButton"
+- assertVisible:
+    id: "mapView"
+- takeScreenshot: "05_back_to_map"
+
+---
+
+# Test 6: Empty map state when user has no trips
+# Note: Requires test account with no trips
+- launchApp
+- tapOn:
+    id: "tab-map"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "mapView"
+# Map should load without crashing even with no pins
+- takeScreenshot: "06_empty_map_no_crash"

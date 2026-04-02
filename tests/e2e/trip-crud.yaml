@@ -1,0 +1,104 @@
+appId: com.travelchecker.app
+name: "Trip CRUD — Create, View, Edit, Delete"
+tags:
+  - trips
+  - smoke
+
+---
+
+# Test 1: Create new trip from tab bar
+- launchApp
+- assertVisible: "My Trips"
+- tapOn:
+    id: "tab-add"
+- assertVisible: "Add Trip"
+- takeScreenshot: "01_add_trip_form"
+
+---
+
+# Test 2: Fill in trip form and submit
+- launchApp
+- tapOn:
+    id: "tab-add"
+- assertVisible: "Add Trip"
+- tapOn:
+    id: "titleInput"
+- inputText: "Summer in Barcelona"
+- tapOn:
+    id: "destinationInput"
+- inputText: "Barcelona"
+# Wait for autocomplete suggestions
+- waitForAnimationToEnd
+- tapOn: "Barcelona, Spain"
+- assertVisible:
+    text: "Spain"
+- tapOn:
+    id: "startDateButton"
+- assertVisible: "Select start date"
+# Select date in date picker
+- swipeLeft:
+    id: "datePicker"
+- tapOn: "15"
+- tapOn: "Confirm"
+- tapOn: "Save Trip"
+- assertVisible: "Summer in Barcelona"
+- takeScreenshot: "02_trip_created_in_list"
+
+---
+
+# Test 3: View trip detail from list
+- launchApp
+- assertVisible: "My Trips"
+- tapOn: "Summer in Barcelona"
+- assertVisible: "Barcelona, Spain"
+- assertVisible: "Spain"
+- takeScreenshot: "03_trip_detail"
+
+---
+
+# Test 4: Edit trip title
+- launchApp
+- tapOn: "Summer in Barcelona"
+- tapOn:
+    id: "editTripButton"
+- assertVisible: "Edit Trip"
+- clearText:
+    id: "titleInput"
+- inputText: "Barcelona Adventure 2024"
+- tapOn: "Save Changes"
+- assertVisible: "Barcelona Adventure 2024"
+- takeScreenshot: "04_trip_edited"
+
+---
+
+# Test 5: Add budget to existing trip
+- launchApp
+- tapOn: "Barcelona Adventure 2024"
+- tapOn: "Add Budget"
+- assertVisible: "Budget"
+- tapOn:
+    id: "accommodationInput"
+- inputText: "800"
+- tapOn:
+    id: "foodInput"
+- inputText: "400"
+- tapOn:
+    id: "transportInput"
+- inputText: "200"
+- tapOn: "Save Budget"
+- assertVisible: "1,400"
+- takeScreenshot: "05_budget_added"
+
+---
+
+# Test 6: Delete trip with confirmation
+- launchApp
+- tapOn: "Barcelona Adventure 2024"
+- tapOn:
+    id: "tripOptionsButton"
+- tapOn: "Delete Trip"
+- assertVisible: "Delete trip?"
+- tapOn: "Delete"
+- assertNotVisible: "Barcelona Adventure 2024"
+- assertVisible: "My Trips"
+- takeScreenshot: "06_trip_deleted"

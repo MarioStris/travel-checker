@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Travel Checker Local",
+      "Group": "Local",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "travel_checker",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/pgpass"
+    }
+  }
+}

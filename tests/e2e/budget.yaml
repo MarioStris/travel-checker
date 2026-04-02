@@ -1,0 +1,116 @@
+appId: com.travelchecker.app
+name: "Budget Flow — Add, Edit, Verify Total"
+tags:
+  - budget
+  - trips
+
+---
+
+# Test 1: Navigate to budget section from trip detail
+- launchApp
+- tapOn:
+    id: "tab-trips"
+- tapOn:
+    id: "tripCard"
+    index: 0
+- scrollTo: "Budget"
+- assertVisible: "Budget"
+- takeScreenshot: "01_budget_section_visible"
+
+---
+
+# Test 2: Add budget with all categories filled
+- launchApp
+- tapOn:
+    id: "tab-trips"
+- tapOn:
+    id: "tripCard"
+    index: 0
+- tapOn: "Add Budget"
+- assertVisible:
+    id: "budgetForm"
+- tapOn:
+    id: "accommodationInput"
+- inputText: "600"
+- tapOn:
+    id: "foodInput"
+- inputText: "350"
+- tapOn:
+    id: "transportInput"
+- inputText: "150"
+- tapOn:
+    id: "activitiesInput"
+- inputText: "200"
+- tapOn:
+    id: "otherInput"
+- inputText: "100"
+- tapOn: "Save Budget"
+- takeScreenshot: "02_budget_saved"
+
+---
+
+# Test 3: Verify budget total is correctly calculated
+- launchApp
+- tapOn:
+    id: "tab-trips"
+- tapOn:
+    id: "tripCard"
+    index: 0
+- scrollTo: "Budget"
+# 600 + 350 + 150 + 200 + 100 = 1,400
+- assertVisible: "1,400"
+- takeScreenshot: "03_budget_total_correct"
+
+---
+
+# Test 4: Budget breakdown bars are visible for each category
+- launchApp
+- tapOn:
+    id: "tab-trips"
+- tapOn:
+    id: "tripCard"
+    index: 0
+- scrollTo: "Budget"
+- assertVisible: "Accommodation"
+- assertVisible: "Food & Dining"
+- assertVisible: "Transport"
+- assertVisible: "Activities"
+- assertVisible: "Other"
+- takeScreenshot: "04_budget_breakdown_bars"
+
+---
+
+# Test 5: Edit existing budget and verify updated total
+- launchApp
+- tapOn:
+    id: "tab-trips"
+- tapOn:
+    id: "tripCard"
+    index: 0
+- scrollTo: "Budget"
+- tapOn:
+    id: "editBudgetButton"
+- clearText:
+    id: "accommodationInput"
+- inputText: "900"
+- tapOn: "Save Budget"
+# New total: 900 + 350 + 150 + 200 + 100 = 1,700
+- assertVisible: "1,700"
+- takeScreenshot: "05_budget_updated"
+
+---
+
+# Test 6: Mark budget as approximate
+- launchApp
+- tapOn:
+    id: "tab-trips"
+- tapOn:
+    id: "tripCard"
+    index: 0
+- tapOn:
+    id: "editBudgetButton"
+- tapOn:
+    id: "isApproximateToggle"
+- tapOn: "Save Budget"
+- assertVisible: "Approximate values"
+- takeScreenshot: "06_approximate_budget_marked"

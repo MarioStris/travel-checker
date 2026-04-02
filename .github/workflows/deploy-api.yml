@@ -1,0 +1,105 @@
+name: Deploy API to Railway
+
+on:
+  push:
+    branches: [main]
+
+# Only one deployment runs at a time
+concurrency:
+  group: deploy-api-production
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "20"
+  RAILWAY_SERVICE: travel-checker-api
+
+jobs:
+  deploy:
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate --schema=prisma/schema.prisma
+
+      # Run migrations against the production DB before new code is live
+      - name: Run Prisma migrations
+        run: npx prisma migrate deploy --schema=prisma/schema.prisma
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # Deploy via Railway CLI
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        run: railway up --service=${{ env.RAILWAY_SERVICE }} --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      # Wait for Railway to bring up the new deployment
+      - name: Wait for deployment to stabilise
+        run: sleep 30
+
+      - name: Health check
+        id: health
+        run: |
+          STATUS=$(curl -sf -o /dev/null -w "%{http_code}" \
+            "${{ secrets.API_BASE_URL }}/health" || echo "000")
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          if [ "$STATUS" != "200" ]; then
+            echo "Health check failed — HTTP $STATUS"
+            exit 1
+          fi
+          echo "Health check passed — HTTP $STATUS"
+
+      # ---------------------------------------------------------------------------
+      # Rollback on failure
+      # ---------------------------------------------------------------------------
+      - name: Rollback on failure
+        if: failure() && steps.health.conclusion == 'failure'
+        run: |
+          echo "Rolling back to previous deployment..."
+          railway rollback --service=${{ env.RAILWAY_SERVICE }}
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      # ---------------------------------------------------------------------------
+      # Slack / Discord notification
+      # ---------------------------------------------------------------------------
+      - name: Notify on success
+        if: success()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": ":white_check_mark: *Travel Checker API* deployed successfully to *production*.\n Branch: `${{ github.ref_name }}` | Commit: `${{ github.sha }}` | Actor: ${{ github.actor }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": ":x: *Travel Checker API* deployment *FAILED*.\n Branch: `${{ github.ref_name }}` | Commit: `${{ github.sha }}` | Actor: ${{ github.actor }}\n <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

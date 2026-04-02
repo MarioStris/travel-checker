@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"C:/Users/mariost/Desktop/gitHubProjects/company-agent-team/projects/travel-checker/apps/mobile/app/trip/[id].tsx\" \"C:/Users/mariost/Desktop/gitHubProjects/company-agent-team/projects/travel-checker/apps/mobile/src/components/LoadingSkeleton.tsx\" \"C:/Users/mariost/Desktop/gitHubProjects/company-agent-team/projects/travel-checker/apps/mobile/app/\\(auth\\)/onboarding.tsx\" \"C:/Users/mariost/Desktop/gitHubProjects/company-agent-team/projects/travel-checker/apps/mobile/app/\\(tabs\\)/index.tsx\")"
+    ]
+  }
+}

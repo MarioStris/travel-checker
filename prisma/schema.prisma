@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String    @id @default(uuid()) @db.Uuid
+  clerkId          String    @unique @map("clerk_id")
+  email            String    @unique
+  username         String?   @unique @db.VarChar(50)
+  displayName      String    @map("display_name") @db.VarChar(100)
+  bio              String?
+  avatarUrl        String?   @map("avatar_url") @db.VarChar(500)
+  avatarR2Key      String?   @map("avatar_r2_key") @db.VarChar(500)
+  travelerCategory String    @default("solo") @map("traveler_category") @db.VarChar(30)
+  ageRange         String?   @map("age_range") @db.VarChar(10)
+  countriesCount   Int       @default(0) @map("countries_count")
+  tripsCount       Int       @default(0) @map("trips_count")
+  isPublic         Boolean   @default(true) @map("is_public")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  trips    Trip[]
+  comments Comment[]
+  likes    Like[]
+
+  followedBy Follow[] @relation("following")
+  following  Follow[] @relation("follower")
+  pushTokens PushToken[]
+
+  @@map("users")
+}
+
+model Trip {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  title            String    @db.VarChar(200)
+  description      String?
+  destination      String    @db.VarChar(200)
+  country          String    @db.VarChar(100)
+  countryCode      String    @map("country_code") @db.Char(2)
+  city             String?   @db.VarChar(100)
+  latitude         Decimal   @db.Decimal(10, 7)
+  longitude        Decimal   @db.Decimal(10, 7)
+  startDate        DateTime  @map("start_date") @db.Date
+  endDate          DateTime? @map("end_date") @db.Date
+  season           String?   @db.VarChar(10)
+  travelerCategory String    @default("solo") @map("traveler_category") @db.VarChar(30)
+  ageRange         String?   @map("age_range") @db.VarChar(10)
+  isPublic         Boolean   @default(false) @map("is_public")
+  coverPhotoUrl    String?   @map("cover_photo_url") @db.VarChar(500)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos        TripPhoto[]
+  accommodation Accommodation?
+  budget        Budget?
+  comments      Comment[]
+  likes         Like[]
+
+  @@index([userId])
+  @@index([countryCode])
+  @@index([startDate(sort: Desc)])
+  @@index([isPublic])
+  @@index([travelerCategory])
+  @@map("trips")
+}
+
+model TripPhoto {
+  id           String   @id @default(uuid()) @db.Uuid
+  tripId       String   @map("trip_id") @db.Uuid
+  url          String   @db.VarChar(500)
+  r2Key        String?  @map("r2_key") @db.VarChar(500)
+  thumbnailUrl String?  @map("thumbnail_url") @db.VarChar(500)
+  caption      String?  @db.VarChar(500)
+  sortOrder    Int      @default(0) @map("sort_order") @db.SmallInt
+  width        Int?
+  height       Int?
+  sizeBytes    Int?     @map("size_bytes")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+  @@map("trip_photos")
+}
+
+model Accommodation {
+  id        String   @id @default(uuid()) @db.Uuid
+  tripId    String   @unique @map("trip_id") @db.Uuid
+  name      String   @db.VarChar(200)
+  type      String   @default("hotel") @db.VarChar(30)
+  url       String?  @db.VarChar(500)
+  rating    Int?     @db.SmallInt
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@map("accommodations")
+}
+
+model Budget {
+  id            String   @id @default(uuid()) @db.Uuid
+  tripId        String   @unique @map("trip_id") @db.Uuid
+  currency      String   @default("EUR") @db.Char(3)
+  accommodation Decimal  @default(0) @db.Decimal(10, 2)
+  food          Decimal  @default(0) @db.Decimal(10, 2)
+  transport     Decimal  @default(0) @db.Decimal(10, 2)
+  activities    Decimal  @default(0) @db.Decimal(10, 2)
+  other         Decimal  @default(0) @db.Decimal(10, 2)
+  isApproximate Boolean  @default(false) @map("is_approximate")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@map("budgets")
+}
+
+model Follow {
+  followerId  String   @map("follower_id") @db.Uuid
+  followingId String   @map("following_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  follower  User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  tripId    String   @map("trip_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  parentId  String?  @map("parent_id") @db.Uuid
+  body      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  trip    Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("CommentReplies")
+
+  @@index([tripId])
+  @@index([userId])
+  @@map("comments")
+}
+
+model Like {
+  userId    String   @map("user_id") @db.Uuid
+  tripId    String   @map("trip_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@id([userId, tripId])
+  @@index([tripId])
+  @@map("likes")
+}
+
+model PushToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @db.VarChar(200)
+  platform  String   @default("expo") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, token])
+  @@index([userId])
+  @@map("push_tokens")
+}

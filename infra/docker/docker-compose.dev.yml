@@ -1,0 +1,63 @@
+version: "3.9"
+
+# =============================================================================
+# Travel Checker — Development override
+# Usage: docker compose -f infra/docker/docker-compose.yml \
+#                       -f infra/docker/docker-compose.dev.yml up
+#
+# Adds:
+#   - Hot reload via tsx watch (source mounted into container)
+#   - pgAdmin for database management (http://localhost:5050)
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # API — development mode (hot reload)
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.api
+      target: builder          # stop at builder stage — keeps dev deps
+    command: ["node", "--import", "tsx/esm", "--watch", "apps/api/src/index.ts"]
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/travel_checker
+    volumes:
+      # Mount source so tsx watch picks up changes immediately
+      - ../../apps/api/src:/app/apps/api/src:ro
+      - ../../packages/shared/src:/app/packages/shared/src:ro
+      # Prevent container node_modules from being overwritten by host
+      - /app/node_modules
+      - /app/apps/api/node_modules
+
+  # ---------------------------------------------------------------------------
+  # pgAdmin — database GUI
+  # ---------------------------------------------------------------------------
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: travel-checker-pgadmin
+    restart: unless-stopped
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@local.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin-servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - travel-checker-net
+
+# =============================================================================
+# Volumes (dev-only)
+# =============================================================================
+volumes:
+  pgadmin_data:
+    driver: local

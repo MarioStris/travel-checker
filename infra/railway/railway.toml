@@ -1,0 +1,27 @@
+[build]
+# Railway detects the Dockerfile automatically; specify it explicitly for clarity
+dockerfilePath = "infra/docker/Dockerfile.api"
+buildCommand   = ""          # Docker build handles everything
+
+[deploy]
+startCommand    = "node apps/api/dist/index.js"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[deploy.healthcheck]
+path              = "/health"
+intervalSeconds   = 30
+timeoutSeconds    = 10
+gracePeriodSeconds = 20
+successThreshold  = 1
+failureThreshold  = 3
+
+[environments.production]
+[environments.production.variables]
+NODE_ENV = "production"
+PORT     = "3001"
+
+[environments.staging]
+[environments.staging.variables]
+NODE_ENV = "staging"
+PORT     = "3001"

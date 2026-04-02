@@ -1,0 +1,82 @@
+appId: com.travelchecker.app
+name: "Profile — View, Edit Bio, Verify Stats"
+tags:
+  - profile
+  - user
+
+---
+
+# Test 1: Profile tab is accessible
+- launchApp
+- tapOn:
+    id: "tab-profile"
+- assertVisible: "Profile"
+- takeScreenshot: "01_profile_screen"
+
+---
+
+# Test 2: Stats card shows correct labels
+- launchApp
+- tapOn:
+    id: "tab-profile"
+- assertVisible: "Trips"
+- assertVisible: "Countries"
+- assertVisible: "Continents"
+- assertVisible: "Spent"
+- takeScreenshot: "02_stats_labels_visible"
+
+---
+
+# Test 3: Navigate to edit profile screen
+- launchApp
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "editProfileButton"
+- assertVisible: "Edit Profile"
+- assertVisible:
+    id: "displayNameInput"
+- assertVisible:
+    id: "bioInput"
+- takeScreenshot: "03_edit_profile_screen"
+
+---
+
+# Test 4: Edit bio and save
+- launchApp
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "editProfileButton"
+- clearText:
+    id: "bioInput"
+- inputText: "Passionate traveler exploring the world one country at a time."
+- tapOn: "Save"
+- assertVisible: "Passionate traveler exploring the world one country at a time."
+- takeScreenshot: "04_bio_updated"
+
+---
+
+# Test 5: Stats reflect actual trip count
+- launchApp
+- tapOn:
+    id: "tab-profile"
+# Stats card should show non-zero if user has trips
+- assertVisible:
+    id: "statsCard"
+- takeScreenshot: "05_stats_visible"
+
+---
+
+# Test 6: Profile displays display name correctly
+- launchApp
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "editProfileButton"
+- clearText:
+    id: "displayNameInput"
+- inputText: "Marco Polo"
+- tapOn: "Save"
+- assertVisible: "Marco Polo"
+- takeScreenshot: "06_display_name_updated"

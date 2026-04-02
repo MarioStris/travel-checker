@@ -1,0 +1,75 @@
+appId: com.travelchecker.app
+name: "Auth Flow — Apple Sign In and Onboarding"
+tags:
+  - auth
+  - smoke
+
+---
+
+# Test 1: App launch shows sign-in screen
+- launchApp
+- assertVisible: "Sign in with Apple"
+- assertVisible: "Travel Checker"
+- takeScreenshot: "01_signin_screen"
+
+---
+
+# Test 2: Tapping Sign In with Apple triggers auth flow
+- launchApp
+- tapOn: "Sign in with Apple"
+# Maestro intercepts Apple auth in test mode via mock credential
+- assertVisible: "Welcome to Travel Checker"
+- takeScreenshot: "02_onboarding_welcome"
+
+---
+
+# Test 3: Onboarding — select traveler category
+- launchApp
+- tapOn: "Sign in with Apple"
+- assertVisible: "How do you travel?"
+- tapOn: "Solo"
+- assertVisible:
+    text: "Solo"
+    enabled: true
+- tapOn: "Continue"
+- takeScreenshot: "03_onboarding_category_selected"
+
+---
+
+# Test 4: Onboarding — complete profile setup
+- launchApp
+- tapOn: "Sign in with Apple"
+- tapOn: "Solo"
+- tapOn: "Continue"
+- assertVisible: "What's your display name?"
+- inputText:
+    id: "displayNameInput"
+    text: "Test Traveler"
+- tapOn: "Finish Setup"
+- assertVisible: "My Trips"
+- takeScreenshot: "04_onboarding_complete"
+
+---
+
+# Test 5: Already authenticated user skips onboarding
+- launchApp
+# Assumes user session exists from previous test run
+- assertNotVisible: "Sign in with Apple"
+- assertVisible: "My Trips"
+- takeScreenshot: "05_authenticated_direct_to_trips"
+
+---
+
+# Test 6: Sign out from profile tab
+- launchApp
+- tapOn:
+    id: "tab-profile"
+- assertVisible: "Profile"
+- scrollTo: "Sign Out"
+- tapOn: "Sign Out"
+- assertVisible:
+    text: "Sign out"
+    description: "Confirmation dialog"
+- tapOn: "Confirm"
+- assertVisible: "Sign in with Apple"
+- takeScreenshot: "06_signed_out"

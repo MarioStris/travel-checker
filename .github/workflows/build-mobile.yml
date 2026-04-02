@@ -1,0 +1,127 @@
+name: Build Mobile (EAS)
+
+on:
+  # Manual trigger with profile selection
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "EAS build profile"
+        required: true
+        default: "preview"
+        type: choice
+        options:
+          - development
+          - preview
+          - production
+      platform:
+        description: "Target platform"
+        required: true
+        default: "ios"
+        type: choice
+        options:
+          - ios
+          - android
+          - all
+
+  # Automatic build on main — preview profile
+  push:
+    branches: [main]
+    paths:
+      - "apps/mobile/**"
+      - "packages/shared/**"
+      - ".github/workflows/build-mobile.yml"
+
+# Only one EAS build runs at a time per branch
+concurrency:
+  group: eas-build-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  build:
+    name: EAS Build (${{ github.event.inputs.profile || 'preview' }} / ${{ github.event.inputs.platform || 'ios' }})
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.profile == 'production' && 'production' || 'staging' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies (root + mobile)
+        run: npm ci
+
+      - name: Setup Expo & EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      # Write .env for the mobile app
+      - name: Write mobile .env
+        run: |
+          cat <<EOF > apps/mobile/.env
+          EXPO_PUBLIC_API_URL=${{ secrets.API_BASE_URL }}
+          EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
+          EOF
+
+      - name: EAS Build
+        working-directory: apps/mobile
+        run: |
+          PROFILE="${{ github.event.inputs.profile || 'preview' }}"
+          PLATFORM="${{ github.event.inputs.platform || 'ios' }}"
+
+          eas build \
+            --profile "$PROFILE" \
+            --platform "$PLATFORM" \
+            --non-interactive \
+            --no-wait
+
+      # Upload production iOS build to TestFlight
+      - name: Submit iOS to TestFlight
+        if: >
+          (github.event.inputs.profile == 'production' ||
+           github.event.inputs.profile == '') &&
+          (github.event.inputs.platform == 'ios' ||
+           github.event.inputs.platform == 'all' ||
+           github.event.inputs.platform == '')
+        working-directory: apps/mobile
+        run: |
+          eas submit \
+            --platform ios \
+            --latest \
+            --non-interactive
+        env:
+          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+
+      - name: Notify on success
+        if: success()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": ":iphone: *Travel Checker Mobile* EAS build completed.\n Profile: `${{ github.event.inputs.profile || 'preview' }}` | Platform: `${{ github.event.inputs.platform || 'ios' }}` | Branch: `${{ github.ref_name }}`"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": ":x: *Travel Checker Mobile* EAS build *FAILED*.\n Profile: `${{ github.event.inputs.profile || 'preview' }}` | Platform: `${{ github.event.inputs.platform || 'ios' }}` | <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
