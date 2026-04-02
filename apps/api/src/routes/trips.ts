@@ -134,7 +134,7 @@ tripRoutes.post('/', requireAuth, async (c) => {
 // GET /api/trips/:id — get trip detail
 tripRoutes.get('/:id', requireAuth, async (c) => {
   const { userId } = getAuth(c);
-  const tripId = c.req.param('id');
+  const tripId = c.req.param('id')!;
 
   const trip = await prisma.trip.findUnique({
     where: { id: tripId },
@@ -158,7 +158,7 @@ tripRoutes.get('/:id', requireAuth, async (c) => {
 // PATCH /api/trips/:id — update trip (owner only)
 tripRoutes.patch('/:id', requireAuth, async (c) => {
   const { userId } = getAuth(c);
-  const tripId = c.req.param('id');
+  const tripId = c.req.param('id')!;
 
   const existing = await prisma.trip.findUnique({ where: { id: tripId } });
   if (!existing) return c.json({ error: 'Trip not found' }, 404);
@@ -219,7 +219,7 @@ tripRoutes.patch('/:id', requireAuth, async (c) => {
 // DELETE /api/trips/:id — delete trip (owner only)
 tripRoutes.delete('/:id', requireAuth, async (c) => {
   const { userId } = getAuth(c);
-  const tripId = c.req.param('id');
+  const tripId = c.req.param('id')!;
 
   const existing = await prisma.trip.findUnique({ where: { id: tripId } });
   if (!existing) return c.json({ error: 'Trip not found' }, 404);

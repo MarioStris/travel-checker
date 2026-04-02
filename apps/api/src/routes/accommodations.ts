@@ -16,7 +16,7 @@ const upsertAccommodationSchema = z.object({
 // PUT /api/trips/:id/accommodation — upsert accommodation for a trip
 accommodationRoutes.put('/:id/accommodation', requireAuth, async (c) => {
   const { userId } = getAuth(c);
-  const tripId = c.req.param('id');
+  const tripId = c.req.param('id')!;
 
   const trip = await prisma.trip.findUnique({ where: { id: tripId } });
   if (!trip) return c.json({ error: 'Trip not found' }, 404);
@@ -41,7 +41,7 @@ accommodationRoutes.put('/:id/accommodation', requireAuth, async (c) => {
 // GET /api/trips/:id/accommodation — get accommodation for a trip
 accommodationRoutes.get('/:id/accommodation', requireAuth, async (c) => {
   const { userId } = getAuth(c);
-  const tripId = c.req.param('id');
+  const tripId = c.req.param('id')!;
 
   const trip = await prisma.trip.findUnique({
     where: { id: tripId },
@@ -61,7 +61,7 @@ accommodationRoutes.get('/:id/accommodation', requireAuth, async (c) => {
 // DELETE /api/trips/:id/accommodation — remove accommodation
 accommodationRoutes.delete('/:id/accommodation', requireAuth, async (c) => {
   const { userId } = getAuth(c);
-  const tripId = c.req.param('id');
+  const tripId = c.req.param('id')!;
 
   const trip = await prisma.trip.findUnique({ where: { id: tripId } });
   if (!trip) return c.json({ error: 'Trip not found' }, 404);

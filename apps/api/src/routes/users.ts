@@ -181,7 +181,7 @@ userRoutes.get('/me/export', requireAuth, async (c) => {
 
 // GET /api/users/:id — public profile
 userRoutes.get('/:id', requireAuth, async (c) => {
-  const userId = c.req.param('id');
+  const userId = c.req.param('id')!;
 
   const user = await prisma.user.findUnique({
     where: { id: userId },

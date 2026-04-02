@@ -74,7 +74,7 @@ photoRoutes.post('/upload-url', requireAuth, async (c) => {
 // PATCH /api/photos/:id — update caption or sort order
 photoRoutes.patch('/:id', requireAuth, async (c) => {
   const { userId } = getAuth(c);
-  const photoId = c.req.param('id');
+  const photoId = c.req.param('id')!;
 
   const photo = await prisma.tripPhoto.findUnique({
     where: { id: photoId },
@@ -107,7 +107,7 @@ photoRoutes.patch('/:id', requireAuth, async (c) => {
 // DELETE /api/photos/:id — delete photo and remove from R2
 photoRoutes.delete('/:id', requireAuth, async (c) => {
   const { userId } = getAuth(c);
-  const photoId = c.req.param('id');
+  const photoId = c.req.param('id')!;
 
   const photo = await prisma.tripPhoto.findUnique({
     where: { id: photoId },
@@ -136,7 +136,7 @@ photoRoutes.delete('/:id', requireAuth, async (c) => {
 // POST /api/photos/:id/set-cover — set photo as trip cover
 photoRoutes.post('/:id/set-cover', requireAuth, async (c) => {
   const { userId } = getAuth(c);
-  const photoId = c.req.param('id');
+  const photoId = c.req.param('id')!;
 
   const photo = await prisma.tripPhoto.findUnique({
     where: { id: photoId },

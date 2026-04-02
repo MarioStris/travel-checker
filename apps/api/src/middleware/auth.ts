@@ -1,9 +1,5 @@
 import { Context, Next } from 'hono';
-import { createClerkClient } from '@clerk/backend';
-
-const clerk = createClerkClient({
-  secretKey: process.env.CLERK_SECRET_KEY!,
-});
+import { verifyToken } from '@clerk/backend';
 
 export type AuthContext = {
   userId: string;
@@ -20,7 +16,9 @@ export async function requireAuth(c: Context, next: Next) {
   const token = authHeader.slice(7);
 
   try {
-    const payload = await clerk.verifyToken(token);
+    const payload = await verifyToken(token, {
+      secretKey: process.env.CLERK_SECRET_KEY!,
+    });
 
     // Find user in our DB by clerk ID
     const { prisma } = await import('../index.js');

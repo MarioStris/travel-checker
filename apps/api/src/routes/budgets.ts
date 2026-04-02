@@ -19,7 +19,7 @@ const upsertBudgetSchema = z.object({
 // PUT /api/trips/:id/budget — upsert budget for a trip
 budgetRoutes.put('/:id/budget', requireAuth, async (c) => {
   const { userId } = getAuth(c);
-  const tripId = c.req.param('id');
+  const tripId = c.req.param('id')!;
 
   const trip = await prisma.trip.findUnique({ where: { id: tripId } });
   if (!trip) return c.json({ error: 'Trip not found' }, 404);
@@ -49,7 +49,7 @@ budgetRoutes.put('/:id/budget', requireAuth, async (c) => {
 // GET /api/trips/:id/budget — get budget for a trip
 budgetRoutes.get('/:id/budget', requireAuth, async (c) => {
   const { userId } = getAuth(c);
-  const tripId = c.req.param('id');
+  const tripId = c.req.param('id')!;
 
   const trip = await prisma.trip.findUnique({
     where: { id: tripId },
@@ -74,7 +74,7 @@ budgetRoutes.get('/:id/budget', requireAuth, async (c) => {
 // DELETE /api/trips/:id/budget — remove budget
 budgetRoutes.delete('/:id/budget', requireAuth, async (c) => {
   const { userId } = getAuth(c);
-  const tripId = c.req.param('id');
+  const tripId = c.req.param('id')!;
 
   const trip = await prisma.trip.findUnique({ where: { id: tripId } });
   if (!trip) return c.json({ error: 'Trip not found' }, 404);

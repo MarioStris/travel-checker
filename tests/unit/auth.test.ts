@@ -6,12 +6,10 @@ import { Hono } from 'hono';
  * Tests for requireAuth middleware covering token validation and error cases.
  */
 
-// Mock the Clerk client
+// Mock the Clerk verifyToken function
 const mockVerifyToken = vi.fn();
 vi.mock('@clerk/backend', () => ({
-  createClerkClient: vi.fn(() => ({
-    verifyToken: mockVerifyToken,
-  })),
+  verifyToken: mockVerifyToken,
 }));
 
 // Mock Prisma
