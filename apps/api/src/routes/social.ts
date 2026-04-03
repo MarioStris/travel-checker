@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { prisma } from '../index.js';
 import { requireAuth, getAuth } from '../middleware/auth.js';
-import { calcBudgetTotal } from '../services/trip.service.js';
 
 export const socialRoutes = new Hono();
 

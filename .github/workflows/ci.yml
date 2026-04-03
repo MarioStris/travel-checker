@@ -88,6 +88,9 @@ jobs:
           path: node_modules
           key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
+      - name: Generate Prisma client
+        run: npx prisma generate --schema=prisma/schema.prisma
+
       - name: Run tsc --noEmit
         run: npm run typecheck
 

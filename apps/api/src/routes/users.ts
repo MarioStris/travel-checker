@@ -262,8 +262,6 @@ userRoutes.get('/:id/profile', requireAuth, async (c) => {
     where: { id: targetId },
     select: {
       id: true,
-      clerkId: true,
-      email: true,
       displayName: true,
       username: true,
       bio: true,
