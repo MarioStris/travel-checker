@@ -13,7 +13,7 @@ concurrency:
 
 env:
   NODE_VERSION: "20"
-  RAILWAY_SERVICE: travel-checker-api
+  RAILWAY_SERVICE: "@travel-checker/api"
 
 jobs:
   # ---------------------------------------------------------------------------
