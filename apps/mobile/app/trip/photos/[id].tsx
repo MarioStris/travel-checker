@@ -141,9 +141,7 @@ export default function PhotoManageScreen() {
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
-        <TouchableOpacity onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
-          <Text className="text-sky-500 font-semibold">Back</Text>
-        </TouchableOpacity>
+        <View style={{ width: 44 }} />
         <Text className="text-base font-bold text-gray-900">
           Photos ({photos.length}/{MAX_PHOTOS})
         </Text>

@@ -52,7 +52,7 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <AuthTokenSetup />
           <StatusBar style="auto" />
-          <Stack screenOptions={{ headerShown: false }}>
+          <Stack screenOptions={{ headerShown: false, gestureEnabled: true, fullScreenGestureEnabled: true }}>
             <Stack.Screen name="(auth)" options={{ animation: "fade" }} />
             <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
             <Stack.Screen

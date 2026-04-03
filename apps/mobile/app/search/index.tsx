@@ -147,13 +147,6 @@ export default function SearchScreen() {
           paddingVertical: 10,
         }}
       >
-        <Pressable
-          onPress={() => router.back()}
-          style={{ marginRight: 12 }}
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </Pressable>
         <Text style={{ fontSize: 20, fontWeight: "700", color: colors.text }}>
           Find Friends
         </Text>

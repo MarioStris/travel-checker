@@ -145,13 +145,6 @@ export default function UserProfileScreen() {
           paddingVertical: 10,
         }}
       >
-        <Pressable
-          onPress={() => router.back()}
-          accessibilityLabel="Go back"
-          style={{ marginRight: 12 }}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </Pressable>
         <Text
           style={{ fontSize: 18, fontWeight: "700", color: colors.text, flex: 1 }}
           numberOfLines={1}

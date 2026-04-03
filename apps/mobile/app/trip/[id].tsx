@@ -101,23 +101,8 @@ export default function TripDetailScreen() {
           </View>
         )}
 
-        {/* Back & Actions overlay */}
-        <SafeAreaView edges={["top"]} className="absolute top-0 left-0 right-0 flex-row justify-between px-4 pt-2">
-          <Pressable
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: "rgba(0,0,0,0.4)",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Ionicons name="chevron-back" size={22} color="#fff" />
-          </Pressable>
+        {/* Actions overlay */}
+        <SafeAreaView edges={["top"]} className="absolute top-0 left-0 right-0 flex-row justify-end px-4 pt-2">
           <View className="flex-row gap-2">
             <Pressable
               onPress={() => router.push(`/trip/edit/${id}`)}
