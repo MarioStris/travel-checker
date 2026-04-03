@@ -63,7 +63,7 @@ jobs:
         id: health
         run: |
           for i in 1 2 3; do
-            STATUS=$(curl -sf -o /dev/null -w "%{http_code}" \
+            STATUS=$(curl -sfL -o /dev/null -w "%{http_code}" \
               "${{ secrets.API_BASE_URL }}/health" || echo "000")
             echo "Attempt $i: HTTP $STATUS"
             if [ "$STATUS" = "200" ]; then
@@ -83,10 +83,8 @@ jobs:
       - name: Rollback on failure
         if: failure() && steps.health.conclusion == 'failure'
         run: |
-          echo "Rolling back to previous deployment..."
-          railway rollback --service=${{ env.RAILWAY_SERVICE }}
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          echo "Health check failed — check Railway dashboard for deployment status"
+          echo "Manual rollback may be needed via Railway dashboard"
 
       # ---------------------------------------------------------------------------
       # Notify on success (Slack)
