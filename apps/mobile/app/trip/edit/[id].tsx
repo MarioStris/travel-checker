@@ -4,28 +4,34 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTripDetail, useUpdateTrip } from "@/hooks/useTrips";
 import { CategoryPicker } from "@/components/CategoryPicker";
+import { VisibilityPicker } from "@/components/VisibilityPicker";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import { useThemeStore } from "@/lib/theme";
 import type { TravelerCategory } from "@travel-checker/shared/src/types";
+import type { TripVisibility } from "@/types/social";
 
 export default function EditTripScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: trip, isLoading } = useTripDetail(id);
   const updateTrip = useUpdateTrip();
+  const { colors } = useThemeStore();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<TravelerCategory>("solo");
-  const [isPublic, setIsPublic] = useState(false);
+  const [visibility, setVisibility] = useState<TripVisibility>("private");
 
   useEffect(() => {
     if (trip) {
       setTitle(trip.title);
       setDescription(trip.description ?? "");
       setCategory(trip.travelerCategory as TravelerCategory);
-      setIsPublic(trip.isPublic);
+      setVisibility(
+        trip.isPublic ? "public" : "private"
+      );
     }
   }, [trip]);
 
@@ -37,7 +43,9 @@ export default function EditTripScreen() {
           title,
           description,
           travelerCategory: category,
-          isPublic,
+          isPublic: visibility === "public",
+          // @ts-ignore - visibility field for backend
+          visibility,
         },
       },
       {
@@ -49,27 +57,48 @@ export default function EditTripScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50">
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
         <LoadingSkeleton />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          backgroundColor: colors.card,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.cardBorder,
+        }}
+      >
         <TouchableOpacity onPress={() => router.back()}>
-          <Text className="text-sky-500 font-semibold">Cancel</Text>
+          <Text style={{ color: colors.accent, fontWeight: "600", fontSize: 15 }}>Cancel</Text>
         </TouchableOpacity>
-        <Text className="text-base font-bold text-gray-900">Edit Trip</Text>
+        <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>Edit Trip</Text>
         <TouchableOpacity onPress={handleSave} disabled={updateTrip.isPending}>
-          <Text className="text-sky-500 font-semibold">
+          <Text style={{ color: colors.accent, fontWeight: "600", fontSize: 15 }}>
             {updateTrip.isPending ? "..." : "Save"}
           </Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{
+          maxWidth: 560,
+          width: "100%",
+          alignSelf: "center",
+          paddingHorizontal: 16,
+          paddingTop: 16,
+        }}
+        showsVerticalScrollIndicator={false}
+        style={{ flex: 1 }}
+      >
         <Input
           label="Title"
           value={title}
@@ -78,36 +107,45 @@ export default function EditTripScreen() {
           maxLength={200}
         />
 
-        <View className="mt-4">
-          <Text className="text-sm font-medium text-gray-700 mb-1">Description</Text>
+        <View style={{ marginTop: 16 }}>
+          <Text style={{ fontSize: 13, fontWeight: "500", color: colors.textSecondary, marginBottom: 6 }}>
+            Description
+          </Text>
           <TextInput
             value={description}
             onChangeText={setDescription}
             placeholder="Tell your travel story..."
+            placeholderTextColor={colors.textMuted}
             multiline
-            className="bg-white rounded-xl p-3 text-gray-700 min-h-[120px] border border-gray-200"
-            textAlignVertical="top"
+            style={{
+              backgroundColor: colors.inputBg,
+              borderRadius: 12,
+              padding: 12,
+              color: colors.text,
+              minHeight: 120,
+              borderWidth: 1,
+              borderColor: colors.inputBorder,
+              fontSize: 16,
+              textAlignVertical: "top",
+            }}
           />
         </View>
 
-        <View className="mt-4">
-          <Text className="text-sm font-medium text-gray-700 mb-2">Traveler Category</Text>
-          <CategoryPicker selected={category} onSelect={setCategory} />
+        <View style={{ marginTop: 16 }}>
+          <Text style={{ fontSize: 13, fontWeight: "500", color: colors.textSecondary, marginBottom: 8 }}>
+            Traveler Category
+          </Text>
+          <CategoryPicker value={category} onChange={setCategory} />
         </View>
 
-        <View className="mt-4 flex-row items-center justify-between bg-white rounded-xl p-4 border border-gray-200">
-          <Text className="text-sm text-gray-700">Public trip</Text>
-          <TouchableOpacity
-            onPress={() => setIsPublic(!isPublic)}
-            className={`w-12 h-7 rounded-full ${isPublic ? "bg-sky-500" : "bg-gray-300"} justify-center`}
-          >
-            <View
-              className={`w-5 h-5 bg-white rounded-full shadow ${isPublic ? "ml-6" : "ml-1"}`}
-            />
-          </TouchableOpacity>
+        <View style={{ marginTop: 16 }}>
+          <Text style={{ fontSize: 13, fontWeight: "500", color: colors.textSecondary, marginBottom: 8 }}>
+            Who can see this trip?
+          </Text>
+          <VisibilityPicker value={visibility} onChange={setVisibility} />
         </View>
 
-        <View className="h-20" />
+        <View style={{ height: 80 }} />
       </ScrollView>
     </SafeAreaView>
   );

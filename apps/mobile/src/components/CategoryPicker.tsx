@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import type { TravelerCategory } from "@travel-checker/shared/src/types";
 import { ALL_CATEGORIES, getCategoryConfig } from "@/lib/categoryConfig";
 
@@ -21,25 +22,40 @@ export function CategoryPicker({ value, onChange, label }: CategoryPickerProps) 
           const isSelected = value === category;
 
           return (
-            <TouchableOpacity
+            <Pressable
               key={category}
               onPress={() => onChange(category)}
-              className="flex-row items-center px-3 py-2 rounded-full border"
+              accessibilityRole="radio"
+              accessibilityState={{ selected: isSelected }}
+              accessibilityLabel={config.label}
               style={{
+                flexDirection: "row",
+                alignItems: "center",
+                paddingHorizontal: 14,
+                paddingVertical: 10,
+                borderRadius: 12,
+                borderWidth: 2,
+                minHeight: 44,
                 backgroundColor: isSelected ? config.color : config.bgColor,
-                borderColor: isSelected ? config.color : config.bgColor,
+                borderColor: isSelected ? config.color : "transparent",
+                gap: 6,
               }}
             >
-              <Text className="mr-1.5" style={{ fontSize: 14 }}>
-                {config.emoji}
-              </Text>
+              <Ionicons
+                name={config.icon}
+                size={16}
+                color={isSelected ? "#fff" : config.textColor}
+              />
               <Text
-                className="text-sm font-medium"
-                style={{ color: isSelected ? "#fff" : config.textColor }}
+                style={{
+                  fontSize: 13,
+                  fontWeight: "600",
+                  color: isSelected ? "#fff" : config.textColor,
+                }}
               >
                 {config.label}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>

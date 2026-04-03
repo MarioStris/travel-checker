@@ -25,6 +25,7 @@ const createTripSchema = z.object({
   ageRange: z.string().optional(),
   description: z.string().optional(),
   isPublic: z.boolean().default(false),
+  visibility: z.enum(['public', 'network', 'private']).default('private'),
   accommodation: z.object({
     name: z.string().min(1).max(200),
     type: z.enum(['hotel', 'hostel', 'airbnb', 'camping', 'friends', 'other']).default('hotel'),
@@ -43,7 +44,9 @@ const createTripSchema = z.object({
   }).optional(),
 });
 
-const updateTripSchema = createTripSchema.partial();
+const updateTripSchema = createTripSchema.partial().extend({
+  visibility: z.enum(['public', 'network', 'private']).optional(),
+});
 
 // GET /api/trips — list my trips
 tripRoutes.get('/', requireAuth, async (c) => {
@@ -54,7 +57,7 @@ tripRoutes.get('/', requireAuth, async (c) => {
 
   const [trips, total] = await Promise.all([
     prisma.trip.findMany({
-      where: { userId },
+      where: { userId, active: true },
       include: {
         budget: true,
         accommodation: true,
@@ -65,7 +68,7 @@ tripRoutes.get('/', requireAuth, async (c) => {
       skip: offset,
       take: limit,
     }),
-    prisma.trip.count({ where: { userId } }),
+    prisma.trip.count({ where: { userId, active: true } }),
   ]);
 
   return c.json({
@@ -104,7 +107,8 @@ tripRoutes.post('/', requireAuth, async (c) => {
         travelerCategory: data.travelerCategory,
         ageRange: data.ageRange,
         description: data.description,
-        isPublic: data.isPublic,
+        isPublic: data.isPublic || data.visibility === 'public',
+        visibility: data.visibility,
       },
     });
 
@@ -188,6 +192,7 @@ tripRoutes.patch('/:id', requireAuth, async (c) => {
         ...(data.travelerCategory && { travelerCategory: data.travelerCategory }),
         ...(data.description !== undefined && { description: data.description }),
         ...(data.isPublic !== undefined && { isPublic: data.isPublic }),
+        ...(data.visibility && { visibility: data.visibility, isPublic: data.visibility === 'public' }),
       },
     });
 
@@ -225,7 +230,7 @@ tripRoutes.delete('/:id', requireAuth, async (c) => {
   if (!existing) return c.json({ error: 'Trip not found' }, 404);
   if (existing.userId !== userId) return c.json({ error: 'Forbidden' }, 403);
 
-  await prisma.trip.delete({ where: { id: tripId } });
+  await prisma.trip.update({ where: { id: tripId }, data: { active: false } });
   await syncUserStats(prisma, userId);
 
   return c.json({ ok: true });
@@ -236,7 +241,7 @@ tripRoutes.get('/map/pins', requireAuth, async (c) => {
   const { userId } = getAuth(c);
 
   const pins = await prisma.trip.findMany({
-    where: { userId },
+    where: { userId, active: true },
     select: {
       id: true,
       title: true,

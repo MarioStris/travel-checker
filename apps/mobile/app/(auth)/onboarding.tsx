@@ -3,11 +3,13 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Pressable,
   ScrollView,
   Alert,
   Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useUser } from "@clerk/clerk-expo";
 import { LinearGradient } from "expo-linear-gradient";
 import * as SecureStore from "expo-secure-store";
 import * as Haptics from "expo-haptics";
@@ -18,6 +20,7 @@ import Animated, {
   Easing,
   FadeInUp,
 } from "react-native-reanimated";
+import { Ionicons } from "@expo/vector-icons";
 import type { TravelerCategory, AgeRange } from "@travel-checker/shared/src/types";
 import { ALL_CATEGORIES, getCategoryConfig } from "@/lib/categoryConfig";
 import { useUpdateProfile } from "@/hooks/useUser";
@@ -54,6 +57,7 @@ const SLIDES = [
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { user } = useUser();
   const [phase, setPhase] = useState<Phase>("intro");
   const [slideIndex, setSlideIndex] = useState(0);
   const [category, setCategory] = useState<TravelerCategory | null>(null);
@@ -63,8 +67,13 @@ export default function OnboardingScreen() {
   const translateX = useSharedValue(0);
 
   React.useEffect(() => {
-    void syncUser();
-  }, []);
+    if (user?.id && user.primaryEmailAddress?.emailAddress) {
+      void syncUser({
+        clerkId: user.id,
+        email: user.primaryEmailAddress.emailAddress,
+      });
+    }
+  }, [user]);
 
   const goToSlide = useCallback(
     (index: number) => {
@@ -181,33 +190,45 @@ export default function OnboardingScreen() {
         </Text>
       </LinearGradient>
 
-      <ScrollView className="flex-1 px-6 pt-6" contentContainerStyle={{ paddingBottom: 120 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120, maxWidth: 560, width: "100%", alignSelf: "center", paddingHorizontal: 24, paddingTop: 24 }}>
         {phase === "category" ? (
           <Animated.View entering={FadeInUp.duration(400)} className="flex-row flex-wrap gap-3">
             {ALL_CATEGORIES.map((cat) => {
               const config = getCategoryConfig(cat);
               const isSelected = category === cat;
               return (
-                <TouchableOpacity
+                <Pressable
                   key={cat}
                   onPress={() => { setCategory(cat); void Haptics.selectionAsync(); }}
-                  className="w-[47%] p-4 rounded-2xl border-2"
                   style={{
+                    width: "47%",
+                    padding: 16,
+                    borderRadius: 16,
+                    borderWidth: 2,
                     backgroundColor: isSelected ? config.color : config.bgColor,
                     borderColor: isSelected ? config.color : "transparent",
+                    minHeight: 80,
                   }}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: isSelected }}
                   accessibilityLabel={config.label}
                 >
-                  <Text className="text-3xl mb-2">{config.emoji}</Text>
+                  <Ionicons
+                    name={config.icon}
+                    size={28}
+                    color={isSelected ? "#fff" : config.textColor}
+                    style={{ marginBottom: 8 }}
+                  />
                   <Text
-                    className="font-semibold text-sm"
-                    style={{ color: isSelected ? "#fff" : config.textColor }}
+                    style={{
+                      fontWeight: "600",
+                      fontSize: 13,
+                      color: isSelected ? "#fff" : config.textColor,
+                    }}
                   >
                     {config.label}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </Animated.View>

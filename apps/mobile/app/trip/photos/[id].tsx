@@ -15,8 +15,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as Haptics from "expo-haptics";
 import { useTripDetail } from "@/hooks/useTrips";
-import { useUploadPhoto, useDeletePhoto } from "@/hooks/usePhotos";
-import { post } from "@/api/client";
+import { useUploadPhoto, useDeletePhoto, useSetCoverPhoto } from "@/hooks/usePhotos";
 import type { TripPhotoDTO } from "@travel-checker/shared/src/types";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -32,6 +31,7 @@ export default function PhotoManageScreen() {
   const { data: trip, isLoading } = useTripDetail(tripId);
   const { mutateAsync: uploadPhoto } = useUploadPhoto();
   const { mutate: deletePhoto } = useDeletePhoto();
+  const { mutateAsync: setCover } = useSetCoverPhoto();
   const [uploading, setUploading] = useState<Record<string, number>>({});
 
   const photos = trip?.photos ?? [];
@@ -112,9 +112,8 @@ export default function PhotoManageScreen() {
 
   const handleSetCover = async (photo: TripPhotoDTO) => {
     try {
-      await post(`/api/photos/${photo.id}/set-cover`, {});
+      await setCover({ photoId: photo.id, tripId });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Done", "Cover photo updated.");
     } catch {
       Alert.alert("Error", "Could not set cover photo.");
     }

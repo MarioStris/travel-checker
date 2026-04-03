@@ -11,6 +11,8 @@ import { accommodationRoutes } from './routes/accommodations.js';
 import { budgetRoutes } from './routes/budgets.js';
 import { statsRoutes } from './routes/stats.js';
 import { notificationRoutes } from './routes/notifications.js';
+import { socialRoutes } from './routes/social.js';
+import { friendRoutes } from './routes/friends.js';
 
 export const prisma = new PrismaClient();
 
@@ -38,6 +40,8 @@ app.route('/api/photos', photoRoutes);
 app.route('/api/places', placeRoutes);
 app.route('/api/stats', statsRoutes);
 app.route('/api/notifications', notificationRoutes);
+app.route('/api/trips', socialRoutes);
+app.route('/api/friends', friendRoutes);
 
 // Global error handler
 app.onError((err, c) => {

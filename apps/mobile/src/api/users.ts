@@ -10,7 +10,6 @@ export async function fetchCurrentUser(): Promise<UserDTO> {
 }
 
 export async function fetchUserStats(): Promise<UserStatsDTO> {
-  // Stats endpoint returns stats directly from getUserStats service
   return get<UserStatsDTO>("/api/users/me/stats");
 }
 
@@ -25,6 +24,36 @@ export async function updateProfile(
   return patch<UserDTO>("/api/users/me", input);
 }
 
-export async function syncUser(): Promise<UserDTO> {
-  return post<UserDTO>("/api/users/sync");
+export async function uploadAvatar(fileUri: string): Promise<string> {
+  // Fetch the file first to get the actual blob and detect content type
+  const fileResponse = await fetch(fileUri);
+  const blob = await fileResponse.blob();
+  const contentType = blob.type && blob.type !== "application/octet-stream"
+    ? blob.type
+    : "image/jpeg";
+  const ext = contentType === "image/png" ? "png" : "jpg";
+
+  const { uploadUrl, avatarUrl } = await post<{
+    uploadUrl: string;
+    avatarUrl: string;
+  }>("/api/users/me/avatar", { fileName: `avatar.${ext}`, contentType });
+
+  const uploadRes = await fetch(uploadUrl, {
+    method: "PUT",
+    body: blob,
+    headers: { "Content-Type": contentType },
+  });
+
+  if (!uploadRes.ok) {
+    throw new Error(`Avatar upload failed: ${uploadRes.status}`);
+  }
+
+  return avatarUrl;
+}
+
+export async function syncUser(data: {
+  clerkId: string;
+  email: string;
+}): Promise<UserDTO> {
+  return post<UserDTO>("/api/users/sync", data);
 }

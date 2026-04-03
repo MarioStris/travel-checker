@@ -7,6 +7,7 @@ import Animated, {
   withTiming,
   Easing,
 } from "react-native-reanimated";
+import { useThemeStore } from "@/lib/theme";
 
 interface SkeletonProps {
   width?: number | string;
@@ -22,6 +23,7 @@ export function Skeleton({
   style,
 }: SkeletonProps) {
   const opacity = useSharedValue(0.3);
+  const { colors } = useThemeStore();
 
   useEffect(() => {
     opacity.value = withRepeat(
@@ -42,7 +44,7 @@ export function Skeleton({
           width: width as number,
           height,
           borderRadius,
-          backgroundColor: "#e5e7eb",
+          backgroundColor: colors.skeleton,
         },
         animatedStyle,
         style,
@@ -65,8 +67,10 @@ export function LoadingSkeleton() {
 }
 
 export function TripCardSkeleton() {
+  const { colors } = useThemeStore();
+
   return (
-    <View className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 mb-3">
+    <View style={{ borderRadius: 20, overflow: "hidden", marginBottom: 12, borderWidth: 1, borderColor: colors.cardBorder, backgroundColor: colors.card }}>
       <Skeleton height={144} borderRadius={0} />
       <View className="p-3 gap-2">
         <Skeleton height={18} width="70%" />
@@ -78,8 +82,10 @@ export function TripCardSkeleton() {
 }
 
 export function StatsSkeleton() {
+  const { colors } = useThemeStore();
+
   return (
-    <View className="bg-sky-100 rounded-2xl p-5 mx-4 mb-4">
+    <View style={{ borderRadius: 16, padding: 20, marginHorizontal: 16, marginBottom: 16, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.cardBorder }}>
       <Skeleton height={14} width="40%" borderRadius={4} />
       <View className="mt-1 mb-4">
         <Skeleton height={22} width="60%" borderRadius={4} />

@@ -1,4 +1,7 @@
 import type { TravelerCategory } from "@travel-checker/shared/src/types";
+import type { Ionicons } from "@expo/vector-icons";
+
+type IoniconsName = keyof typeof Ionicons.glyphMap;
 
 export interface CategoryConfig {
   label: string;
@@ -6,6 +9,7 @@ export interface CategoryConfig {
   bgColor: string;
   textColor: string;
   emoji: string;
+  icon: IoniconsName;
 }
 
 export const CATEGORY_CONFIG: Record<TravelerCategory, CategoryConfig> = {
@@ -15,6 +19,7 @@ export const CATEGORY_CONFIG: Record<TravelerCategory, CategoryConfig> = {
     bgColor: "#eff6ff",
     textColor: "#1d4ed8",
     emoji: "🧳",
+    icon: "person-outline",
   },
   couple: {
     label: "Couple",
@@ -22,6 +27,7 @@ export const CATEGORY_CONFIG: Record<TravelerCategory, CategoryConfig> = {
     bgColor: "#fdf2f8",
     textColor: "#be185d",
     emoji: "💑",
+    icon: "heart-outline",
   },
   family: {
     label: "Family",
@@ -29,6 +35,7 @@ export const CATEGORY_CONFIG: Record<TravelerCategory, CategoryConfig> = {
     bgColor: "#f0fdf4",
     textColor: "#15803d",
     emoji: "👨‍👩‍👧‍👦",
+    icon: "people-outline",
   },
   backpacker: {
     label: "Backpacker",
@@ -36,6 +43,7 @@ export const CATEGORY_CONFIG: Record<TravelerCategory, CategoryConfig> = {
     bgColor: "#fff7ed",
     textColor: "#c2410c",
     emoji: "🎒",
+    icon: "bag-outline",
   },
   luxury: {
     label: "Luxury",
@@ -43,6 +51,7 @@ export const CATEGORY_CONFIG: Record<TravelerCategory, CategoryConfig> = {
     bgColor: "#fefce8",
     textColor: "#a16207",
     emoji: "✨",
+    icon: "diamond-outline",
   },
   digital_nomad: {
     label: "Digital Nomad",
@@ -50,6 +59,7 @@ export const CATEGORY_CONFIG: Record<TravelerCategory, CategoryConfig> = {
     bgColor: "#faf5ff",
     textColor: "#7e22ce",
     emoji: "💻",
+    icon: "laptop-outline",
   },
   adventure: {
     label: "Adventure",
@@ -57,6 +67,7 @@ export const CATEGORY_CONFIG: Record<TravelerCategory, CategoryConfig> = {
     bgColor: "#fef2f2",
     textColor: "#b91c1c",
     emoji: "🏔️",
+    icon: "compass-outline",
   },
   cultural: {
     label: "Cultural",
@@ -64,6 +75,7 @@ export const CATEGORY_CONFIG: Record<TravelerCategory, CategoryConfig> = {
     bgColor: "#f0fdfa",
     textColor: "#0f766e",
     emoji: "🏛️",
+    icon: "library-outline",
   },
   group: {
     label: "Group",
@@ -71,6 +83,7 @@ export const CATEGORY_CONFIG: Record<TravelerCategory, CategoryConfig> = {
     bgColor: "#eef2ff",
     textColor: "#4338ca",
     emoji: "👥",
+    icon: "people-circle-outline",
   },
   business: {
     label: "Business",
@@ -78,6 +91,7 @@ export const CATEGORY_CONFIG: Record<TravelerCategory, CategoryConfig> = {
     bgColor: "#f9fafb",
     textColor: "#374151",
     emoji: "💼",
+    icon: "briefcase-outline",
   },
 };
 

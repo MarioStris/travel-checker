@@ -10,6 +10,7 @@ import Constants from "expo-constants";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { queryClient } from "@/lib/queryClient";
 import { setAuthTokenFetcher } from "@/api/client";
+import { ThemeContext, useThemeProvider } from "@/lib/theme";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -42,8 +43,11 @@ function AuthTokenSetup() {
 }
 
 export default function RootLayout() {
+  const theme = useThemeProvider();
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeContext.Provider value={theme}>
       <ClerkProvider publishableKey={CLERK_KEY} tokenCache={tokenCache}>
         <QueryClientProvider client={queryClient}>
           <AuthTokenSetup />
@@ -71,9 +75,24 @@ export default function RootLayout() {
                 headerShown: false,
               }}
             />
+            <Stack.Screen
+              name="search/index"
+              options={{
+                headerShown: false,
+                animation: "slide_from_right",
+              }}
+            />
+            <Stack.Screen
+              name="user/[id]"
+              options={{
+                headerShown: false,
+                animation: "slide_from_right",
+              }}
+            />
           </Stack>
         </QueryClientProvider>
       </ClerkProvider>
+      </ThemeContext.Provider>
     </GestureHandlerRootView>
   );
 }

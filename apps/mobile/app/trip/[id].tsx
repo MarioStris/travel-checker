@@ -7,9 +7,12 @@ import {
   TouchableOpacity,
   Alert,
   Dimensions,
+  Modal,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import * as Haptics from "expo-haptics";
 import { useTripDetail, useDeleteTrip } from "@/hooks/useTrips";
@@ -18,15 +21,20 @@ import { PhotoGrid } from "@/components/PhotoGrid";
 import { getCategoryConfig } from "@/lib/categoryConfig";
 import { formatDateRange, getTripDuration, formatCurrency } from "@/lib/formatters";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import { TripReactions } from "@/components/TripReactions";
+import { TripComments } from "@/components/TripComments";
+import { useThemeStore } from "@/lib/theme";
 import type { TravelerCategory } from "@travel-checker/shared/src/types";
 
 type TabKey = "overview" | "map" | "photos" | "budget";
 
-const TABS: { key: TabKey; label: string; emoji: string }[] = [
-  { key: "overview", label: "Overview", emoji: "📋" },
-  { key: "map", label: "Map", emoji: "🗺️" },
-  { key: "photos", label: "Photos", emoji: "📷" },
-  { key: "budget", label: "Budget", emoji: "💰" },
+type IoniconsName = keyof typeof Ionicons.glyphMap;
+
+const TABS: { key: TabKey; label: string; icon: IoniconsName }[] = [
+  { key: "overview", label: "Overview", icon: "list-outline" },
+  { key: "map", label: "Map", icon: "map-outline" },
+  { key: "photos", label: "Photos", icon: "camera-outline" },
+  { key: "budget", label: "Budget", icon: "wallet-outline" },
 ];
 
 export default function TripDetailScreen() {
@@ -34,23 +42,26 @@ export default function TripDetailScreen() {
   const router = useRouter();
   const { data: trip, isLoading } = useTripDetail(id);
   const deleteMutation = useDeleteTrip();
+  const { colors } = useThemeStore();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleDelete = useCallback(() => {
-    Alert.alert("Delete Trip", "Are you sure? This cannot be undone.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => {
-          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-          deleteMutation.mutate(id, {
-            onSuccess: () => router.back(),
-            onError: (err) => Alert.alert("Error", err.message),
-          });
-        },
+    setShowDeleteConfirm(true);
+  }, []);
+
+  const confirmDelete = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        setShowDeleteConfirm(false);
+        router.back();
       },
-    ]);
+      onError: (err) => {
+        setShowDeleteConfirm(false);
+        Alert.alert("Error", err.message);
+      },
+    });
   }, [id, deleteMutation, router]);
 
   const switchTab = useCallback((tab: TabKey) => {
@@ -86,41 +97,62 @@ export default function TripDetailScreen() {
           <Image source={{ uri: trip.coverPhotoUrl }} className="w-full h-56" resizeMode="cover" />
         ) : (
           <View className="w-full h-56 items-center justify-center" style={{ backgroundColor: category.color }}>
-            <Text className="text-6xl">{category.emoji}</Text>
+            <Ionicons name="airplane" size={56} color="rgba(255,255,255,0.8)" />
           </View>
         )}
 
         {/* Back & Actions overlay */}
         <SafeAreaView edges={["top"]} className="absolute top-0 left-0 right-0 flex-row justify-between px-4 pt-2">
-          <TouchableOpacity
+          <Pressable
             onPress={() => router.back()}
-            className="bg-black/40 w-10 h-10 rounded-full items-center justify-center"
             accessibilityRole="button"
             accessibilityLabel="Go back"
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: "rgba(0,0,0,0.4)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
           >
-            <Text className="text-white text-lg">{"<"}</Text>
-          </TouchableOpacity>
+            <Ionicons name="chevron-back" size={22} color="#fff" />
+          </Pressable>
           <View className="flex-row gap-2">
-            <TouchableOpacity
+            <Pressable
               onPress={() => router.push(`/trip/edit/${id}`)}
-              className="bg-black/40 w-10 h-10 rounded-full items-center justify-center"
               accessibilityRole="button"
               accessibilityLabel="Edit trip"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: "rgba(0,0,0,0.4)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
-              <Text className="text-white">E</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+              <Ionicons name="create-outline" size={20} color="#fff" />
+            </Pressable>
+            <Pressable
               onPress={handleDelete}
-              className="bg-black/40 w-10 h-10 rounded-full items-center justify-center"
               accessibilityRole="button"
               accessibilityLabel="Delete trip"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: "rgba(0,0,0,0.4)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
-              <Text className="text-white">X</Text>
-            </TouchableOpacity>
+              <Ionicons name="trash-outline" size={20} color="#fff" />
+            </Pressable>
           </View>
         </SafeAreaView>
 
-        <View className="px-4 -mt-6 pb-8">
+        <View style={{ paddingHorizontal: 16, marginTop: -24, paddingBottom: 32, maxWidth: 560, width: "100%", alignSelf: "center" }}>
           {/* Title card */}
           <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
             <Text className="text-xl font-bold text-gray-900">{trip.title}</Text>
@@ -147,20 +179,42 @@ export default function TripDetailScreen() {
 
           {/* Tab bar */}
           <View className="flex-row bg-white rounded-2xl mt-3 border border-gray-100 overflow-hidden">
-            {TABS.map((tab) => (
-              <TouchableOpacity
-                key={tab.key}
-                onPress={() => switchTab(tab.key)}
-                className={`flex-1 py-3 items-center ${activeTab === tab.key ? "border-b-2 border-sky-500" : ""}`}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: activeTab === tab.key }}
-              >
-                <Text className="text-base">{tab.emoji}</Text>
-                <Text className={`text-xs mt-0.5 ${activeTab === tab.key ? "text-sky-600 font-semibold" : "text-gray-400"}`}>
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <Pressable
+                  key={tab.key}
+                  onPress={() => switchTab(tab.key)}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 12,
+                    alignItems: "center",
+                    borderBottomWidth: isActive ? 2 : 0,
+                    borderBottomColor: "#0284c7",
+                    minHeight: 52,
+                  }}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isActive }}
+                  accessibilityLabel={tab.label}
+                >
+                  <Ionicons
+                    name={tab.icon}
+                    size={20}
+                    color={isActive ? "#0284c7" : "#9ca3af"}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      marginTop: 2,
+                      fontWeight: isActive ? "600" : "400",
+                      color: isActive ? "#0284c7" : "#9ca3af",
+                    }}
+                  >
+                    {tab.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
 
           {/* Tab content */}
@@ -170,8 +224,113 @@ export default function TripDetailScreen() {
             {activeTab === "photos" && <PhotosTab tripId={id} photos={trip.photos ?? []} onManage={() => router.push(`/trip/photos/${id}`)} />}
             {activeTab === "budget" && <BudgetTab trip={trip} />}
           </View>
+
+          {/* Reactions */}
+          <View
+            style={{
+              marginTop: 16,
+              backgroundColor: colors.card,
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: colors.cardBorder,
+            }}
+          >
+            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.textSecondary, marginBottom: 10 }}>
+              Reactions
+            </Text>
+            <TripReactions tripId={id} />
+          </View>
+
+          {/* Comments */}
+          <View
+            style={{
+              marginTop: 12,
+              backgroundColor: colors.card,
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: colors.cardBorder,
+            }}
+          >
+            <TripComments tripId={id} />
+          </View>
         </View>
       </ScrollView>
+
+      {/* Delete Confirm Modal */}
+      <Modal visible={showDeleteConfirm} transparent animationType="fade">
+        <Pressable
+          onPress={() => setShowDeleteConfirm(false)}
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "center",
+            alignItems: "center",
+            paddingHorizontal: 24,
+          }}
+        >
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 24,
+              padding: 32,
+              width: "100%",
+              maxWidth: 360,
+              alignItems: "center",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.15,
+              shadowRadius: 24,
+              elevation: 10,
+            }}
+          >
+            <View
+              style={{
+                width: 72,
+                height: 72,
+                borderRadius: 36,
+                backgroundColor: "#fee2e2",
+                justifyContent: "center",
+                alignItems: "center",
+                marginBottom: 20,
+              }}
+            >
+              <Text style={{ fontSize: 32 }}>🗑️</Text>
+            </View>
+            <Text style={{ fontSize: 20, fontWeight: "700", color: "#111827", textAlign: "center", marginBottom: 8 }}>
+              Delete this trip?
+            </Text>
+            <Text style={{ fontSize: 14, color: "#6b7280", textAlign: "center", marginBottom: 24 }}>
+              This action cannot be undone. All trip data, photos, and budget info will be permanently removed.
+            </Text>
+            <Pressable
+              onPress={confirmDelete}
+              disabled={deleteMutation.isPending}
+              style={{
+                backgroundColor: deleteMutation.isPending ? "#fca5a5" : "#ef4444",
+                width: "100%",
+                paddingVertical: 16,
+                borderRadius: 16,
+                alignItems: "center",
+                marginBottom: 12,
+              }}
+            >
+              <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700" }}>
+                {deleteMutation.isPending ? "Deleting..." : "Yes, Delete Trip"}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setShowDeleteConfirm(false)}
+              disabled={deleteMutation.isPending}
+              style={{ width: "100%", paddingVertical: 12, borderRadius: 16, alignItems: "center" }}
+            >
+              <Text style={{ color: "#6b7280", fontSize: 16, fontWeight: "500" }}>Cancel</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }

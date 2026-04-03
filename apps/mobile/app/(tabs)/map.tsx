@@ -1,12 +1,16 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Pressable, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { useRouter } from "expo-router";
 import { useMapPins } from "@/hooks/useTrips";
 import { getCategoryConfig } from "@/lib/categoryConfig";
 import { formatCurrency } from "@/lib/formatters";
+import { Ionicons } from "@expo/vector-icons";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import { Sidebar } from "@/components/Sidebar";
+import { useCurrentUser } from "@/hooks/useUser";
+import { useThemeStore } from "@/lib/theme";
 import type { TravelerCategory } from "@travel-checker/shared/src/types";
 
 interface PinPreview {
@@ -22,8 +26,11 @@ interface PinPreview {
 export default function MapScreen() {
   const router = useRouter();
   const { data: pins, isLoading } = useMapPins();
+  const { data: user } = useCurrentUser();
+  const { colors } = useThemeStore();
   const mapRef = useRef<MapView>(null);
   const [selectedPin, setSelectedPin] = useState<PinPreview | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const initialRegion = useMemo(() => {
     if (!pins?.length) {
@@ -60,18 +67,18 @@ export default function MapScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center">
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
         <LoadingSkeleton />
       </SafeAreaView>
     );
   }
 
   return (
-    <View className="flex-1">
+    <View style={{ flex: 1 }}>
       <MapView
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
-        className="flex-1"
+        style={{ flex: 1 }}
         initialRegion={initialRegion}
         showsUserLocation
         showsMyLocationButton
@@ -104,52 +111,131 @@ export default function MapScreen() {
         })}
       </MapView>
 
-      {/* Bottom stats bar */}
+      {/* Floating avatar button — top right */}
       <SafeAreaView
-        edges={["bottom"]}
-        className="absolute bottom-0 left-0 right-0 bg-white/95 border-t border-gray-200"
+        edges={["top"]}
+        style={{ position: "absolute", top: 0, right: 0 }}
+        pointerEvents="box-none"
       >
-        <View className="flex-row justify-around py-2 px-4">
-          <View className="items-center">
-            <Text className="text-lg font-bold text-gray-900">
+        <Pressable
+          onPress={() => setSidebarOpen(true)}
+          accessibilityLabel="Open profile menu"
+          accessibilityRole="button"
+          style={({ pressed }) => ({
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            overflow: "hidden",
+            opacity: pressed ? 0.7 : 1,
+            borderWidth: 2,
+            borderColor: "rgba(255,255,255,0.9)",
+            marginTop: 8,
+            marginRight: 16,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 4,
+          })}
+        >
+          {user?.avatarUrl ? (
+            <Image
+              source={{ uri: user.avatarUrl }}
+              style={{ width: 40, height: 40, borderRadius: 20 }}
+            />
+          ) : (
+            <View style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: colors.tabBar,
+              alignItems: "center",
+              justifyContent: "center",
+            }}>
+              <Ionicons name="person" size={18} color={colors.textSecondary} />
+            </View>
+          )}
+        </Pressable>
+      </SafeAreaView>
+
+      {/* Bottom stats bar — above the floating tab bar */}
+      <View
+        style={{
+          position: "absolute",
+          bottom: 92,
+          left: 16,
+          right: 16,
+          backgroundColor: colors.tabBar,
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: colors.tabBarBorder,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3,
+        }}
+      >
+        <View style={{ flexDirection: "row", justifyContent: "space-around", paddingVertical: 10, paddingHorizontal: 16 }}>
+          <View style={{ alignItems: "center" }}>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>
               {pins?.length ?? 0}
             </Text>
-            <Text className="text-xs text-gray-500">Trips</Text>
+            <Text style={{ fontSize: 12, color: colors.textSecondary }}>Trips</Text>
           </View>
-          <View className="items-center">
-            <Text className="text-lg font-bold text-gray-900">
+          <View style={{ alignItems: "center" }}>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>
               {uniqueCountries}
             </Text>
-            <Text className="text-xs text-gray-500">Countries</Text>
+            <Text style={{ fontSize: 12, color: colors.textSecondary }}>Countries</Text>
           </View>
         </View>
-      </SafeAreaView>
+      </View>
 
       {/* Selected pin preview */}
       {selectedPin && (
         <TouchableOpacity
           onPress={handlePreviewPress}
           activeOpacity={0.9}
-          className="absolute bottom-24 left-4 right-4 bg-white rounded-2xl p-4 shadow-lg border border-gray-100"
+          style={{
+            position: "absolute",
+            bottom: 156,
+            left: 16,
+            right: 16,
+            backgroundColor: colors.card,
+            borderRadius: 16,
+            padding: 16,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.12,
+            shadowRadius: 8,
+            elevation: 6,
+            borderWidth: 1,
+            borderColor: colors.cardBorder,
+          }}
         >
-          <Text className="text-base font-bold text-gray-900" numberOfLines={1}>
+          <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }} numberOfLines={1}>
             {selectedPin.title}
           </Text>
-          <Text className="text-sm text-gray-500 mt-0.5">
+          <Text style={{ fontSize: 14, color: colors.textSecondary, marginTop: 2 }}>
             {selectedPin.destination}, {selectedPin.country}
           </Text>
-          <View className="flex-row items-center mt-2">
+          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}>
             <View
-              className="px-2 py-0.5 rounded-full mr-2"
               style={{
+                paddingHorizontal: 8,
+                paddingVertical: 2,
+                borderRadius: 12,
+                marginRight: 8,
                 backgroundColor: getCategoryConfig(
                   selectedPin.travelerCategory as TravelerCategory
                 ).bgColor,
               }}
             >
               <Text
-                className="text-xs font-medium"
                 style={{
+                  fontSize: 12,
+                  fontWeight: "500",
                   color: getCategoryConfig(
                     selectedPin.travelerCategory as TravelerCategory
                   ).textColor,
@@ -163,13 +249,15 @@ export default function MapScreen() {
               </Text>
             </View>
             {selectedPin.totalBudget != null && (
-              <Text className="text-sm font-semibold text-sky-600">
+              <Text style={{ fontSize: 14, fontWeight: "600", color: colors.accent }}>
                 {formatCurrency(selectedPin.totalBudget, selectedPin.currency)}
               </Text>
             )}
           </View>
         </TouchableOpacity>
       )}
+
+      <Sidebar visible={sidebarOpen} onClose={() => setSidebarOpen(false)} />
     </View>
   );
 }

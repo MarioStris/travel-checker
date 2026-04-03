@@ -5,7 +5,9 @@ import {
   Text,
   TouchableOpacity,
   type TextInputProps,
+  type ViewStyle,
 } from "react-native";
+import { useThemeStore } from "@/lib/theme";
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -14,6 +16,7 @@ interface InputProps extends TextInputProps {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   onRightIconPress?: () => void;
+  containerStyle?: ViewStyle;
 }
 
 export function Input({
@@ -23,35 +26,46 @@ export function Input({
   leftIcon,
   rightIcon,
   onRightIconPress,
-  className,
+  containerStyle,
   ...props
 }: InputProps) {
   const [focused, setFocused] = useState(false);
+  const { colors } = useThemeStore();
 
   const borderColor = error
-    ? "border-red-400"
+    ? "#ef4444"
     : focused
-    ? "border-sky-400"
-    : "border-gray-200";
+    ? colors.accent
+    : colors.inputBorder;
 
   return (
-    <View className="w-full">
+    <View style={[{ width: "100%" }, containerStyle]}>
       {label && (
-        <Text className="text-sm font-medium text-gray-700 mb-1.5">
+        <Text style={{ fontSize: 13, fontWeight: "500", color: colors.textSecondary, marginBottom: 6 }}>
           {label}
         </Text>
       )}
       <View
-        className={`
-          flex-row items-center bg-white border rounded-2xl px-4
-          ${borderColor}
-          ${props.multiline ? "py-3" : "h-12"}
-        `}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          backgroundColor: colors.inputBg,
+          borderWidth: 1,
+          borderColor,
+          borderRadius: 16,
+          paddingHorizontal: 16,
+          minHeight: props.multiline ? undefined : 48,
+          paddingVertical: props.multiline ? 12 : 0,
+        }}
       >
-        {leftIcon && <View className="mr-2">{leftIcon}</View>}
+        {leftIcon && <View style={{ marginRight: 8 }}>{leftIcon}</View>}
         <TextInput
-          className={`flex-1 text-base text-gray-900 ${className ?? ""}`}
-          placeholderTextColor="#9ca3af"
+          style={{
+            flex: 1,
+            fontSize: 16,
+            color: colors.text,
+          }}
+          placeholderTextColor={colors.textMuted}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           {...props}
@@ -59,16 +73,16 @@ export function Input({
         {rightIcon && (
           <TouchableOpacity
             onPress={onRightIconPress}
-            className="ml-2"
+            style={{ marginLeft: 8 }}
             disabled={!onRightIconPress}
           >
             {rightIcon}
           </TouchableOpacity>
         )}
       </View>
-      {error && <Text className="text-xs text-red-500 mt-1">{error}</Text>}
+      {error && <Text style={{ fontSize: 12, color: "#ef4444", marginTop: 4 }}>{error}</Text>}
       {hint && !error && (
-        <Text className="text-xs text-gray-400 mt-1">{hint}</Text>
+        <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>{hint}</Text>
       )}
     </View>
   );

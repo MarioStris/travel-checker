@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UpdateProfileInput } from "@travel-checker/shared/src/types";
-import { fetchCurrentUser, fetchUserStats, updateProfile } from "@/api/users";
+import { fetchCurrentUser, fetchUserStats, updateProfile, uploadAvatar } from "@/api/users";
 
 export const USER_KEYS = {
   me: ["user", "me"] as const,
@@ -30,6 +30,17 @@ export function useUpdateProfile() {
     mutationFn: (input: UpdateProfileInput) => updateProfile(input),
     onSuccess: (data) => {
       queryClient.setQueryData(USER_KEYS.me, data);
+    },
+  });
+}
+
+export function useUploadAvatar() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (uri: string) => uploadAvatar(uri),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: USER_KEYS.me });
     },
   });
 }

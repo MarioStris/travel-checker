@@ -2,21 +2,23 @@ import React, { useEffect } from "react";
 import { Tabs, useRouter } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
 import * as SplashScreen from "expo-splash-screen";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useThemeStore } from "@/lib/theme";
+
+type IoniconsName = keyof typeof Ionicons.glyphMap;
 
 interface TabIconProps {
-  emoji: string;
+  name: IoniconsName;
+  focusedName: IoniconsName;
   focused: boolean;
-  label: string;
+  color: string;
 }
 
-function TabIcon({ emoji, focused, label }: TabIconProps) {
+function TabIcon({ name, focusedName, focused, color }: TabIconProps) {
   return (
-    <View className="items-center pt-1">
-      <Text style={{ fontSize: focused ? 22 : 20 }}>{emoji}</Text>
-      {focused && (
-        <View className="w-1 h-1 rounded-full bg-sky-500 mt-0.5" />
-      )}
+    <View style={{ alignItems: "center", paddingTop: 4 }}>
+      <Ionicons name={focused ? focusedName : name} size={24} color={color} />
     </View>
   );
 }
@@ -24,6 +26,7 @@ function TabIcon({ emoji, focused, label }: TabIconProps) {
 export default function TabsLayout() {
   const { isLoaded, isSignedIn } = useAuth();
   const router = useRouter();
+  const { colors } = useThemeStore();
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -40,68 +43,63 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          borderTopWidth: 1,
-          borderTopColor: "#f1f5f9",
-          backgroundColor: "#ffffff",
-          height: 84,
-          paddingBottom: 20,
+          position: "absolute",
+          bottom: 16,
+          left: 16,
+          right: 16,
+          borderTopWidth: 0,
+          backgroundColor: colors.tabBar,
+          height: 60,
+          paddingBottom: 8,
           paddingTop: 8,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: colors.tabBarBorder,
+          elevation: 0,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: "500",
+          fontSize: 11,
+          fontWeight: "600",
+          marginTop: 2,
         },
-        tabBarActiveTintColor: "#0ea5e9",
-        tabBarInactiveTintColor: "#9ca3af",
+        tabBarActiveTintColor: colors.tabActive,
+        tabBarInactiveTintColor: colors.tabInactive,
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="feed"
         options={{
-          title: "Home",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="🏠" focused={focused} label="Home" />
+          title: "Feed",
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name="newspaper-outline" focusedName="newspaper" focused={focused} color={color} />
           ),
+          tabBarAccessibilityLabel: "Feed tab",
         }}
       />
       <Tabs.Screen
         name="map"
         options={{
-          title: "Map",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="🗺️" focused={focused} label="Map" />
+          title: "Maps",
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name="map-outline" focusedName="map" focused={focused} color={color} />
           ),
+          tabBarAccessibilityLabel: "Maps tab",
         }}
       />
       <Tabs.Screen
-        name="add"
+        name="index"
         options={{
-          title: "Add",
-          tabBarIcon: ({ focused }) => (
-            <View className="bg-sky-500 w-12 h-12 rounded-2xl items-center justify-center -mt-4 shadow-lg">
-              <Text className="text-white text-2xl font-light">+</Text>
-            </View>
+          title: "Trips",
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name="airplane-outline" focusedName="airplane" focused={focused} color={color} />
           ),
+          tabBarAccessibilityLabel: "My Trips tab",
         }}
       />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="👤" focused={focused} label="Profile" />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="more"
-        options={{
-          title: "More",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="⚙️" focused={focused} label="More" />
-          ),
-        }}
-      />
+      {/* Hidden screens — still exist as routes but not shown as tabs */}
+      <Tabs.Screen name="profile" options={{ href: null }} />
+      <Tabs.Screen name="more" options={{ href: null }} />
+      <Tabs.Screen name="add" options={{ href: null }} />
     </Tabs>
   );
 }

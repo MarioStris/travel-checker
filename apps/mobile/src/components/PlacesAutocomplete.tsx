@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   FlatList,
   ActivityIndicator,
 } from "react-native";
@@ -26,6 +26,7 @@ export function PlacesAutocomplete({
   const [query, setQuery] = useState(value ?? "");
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const blurTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: predictions, isLoading } = usePlacesAutocomplete(query);
   const { data: placeDetails } = usePlaceDetails(selectedPlaceId);
@@ -39,6 +40,7 @@ export function PlacesAutocomplete({
   }, [placeDetails, selectedPlaceId]);
 
   const handleSelectPrediction = (placeId: string, description: string) => {
+    if (blurTimeout.current) clearTimeout(blurTimeout.current);
     setQuery(description);
     setSelectedPlaceId(placeId);
   };
@@ -53,7 +55,13 @@ export function PlacesAutocomplete({
           setShowResults(true);
         }}
         placeholder={placeholder}
-        onFocus={() => setShowResults(true)}
+        onFocus={() => {
+          if (blurTimeout.current) clearTimeout(blurTimeout.current);
+          setShowResults(true);
+        }}
+        onBlur={() => {
+          blurTimeout.current = setTimeout(() => setShowResults(false), 200);
+        }}
         rightIcon={
           isLoading ? <ActivityIndicator size="small" color="#0ea5e9" /> : null
         }
@@ -65,12 +73,19 @@ export function PlacesAutocomplete({
             data={predictions}
             keyExtractor={(item) => item.placeId}
             scrollEnabled={false}
+            keyboardShouldPersistTaps="always"
             renderItem={({ item }) => (
-              <TouchableOpacity
+              <Pressable
                 onPress={() =>
                   handleSelectPrediction(item.placeId, item.description)
                 }
-                className="px-4 py-3 border-b border-gray-50 active:bg-gray-50"
+                style={({ pressed }) => ({
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  borderBottomWidth: 1,
+                  borderBottomColor: "#f9fafb",
+                  backgroundColor: pressed ? "#f9fafb" : "transparent",
+                })}
               >
                 <Text className="text-sm font-medium text-gray-900">
                   {item.mainText}
@@ -78,7 +93,7 @@ export function PlacesAutocomplete({
                 <Text className="text-xs text-gray-500 mt-0.5">
                   {item.secondaryText}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             )}
           />
         </View>

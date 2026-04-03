@@ -34,6 +34,10 @@ export async function deletePhoto(photoId: string): Promise<void> {
   return del<void>(`/api/photos/${photoId}`);
 }
 
+export async function setCoverPhoto(photoId: string): Promise<void> {
+  await post(`/api/photos/${photoId}/set-cover`, {});
+}
+
 export async function uploadTripPhoto(
   tripId: string,
   fileUri: string,

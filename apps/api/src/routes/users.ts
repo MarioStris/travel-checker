@@ -179,7 +179,147 @@ userRoutes.get('/me/export', requireAuth, async (c) => {
   });
 });
 
-// GET /api/users/:id — public profile
+// GET /api/users/search — search users by name/username
+userRoutes.get('/search', requireAuth, async (c) => {
+  const { userId } = getAuth(c);
+  const q = c.req.query('q') || '';
+  const page = Number(c.req.query('page') || '1');
+  const pageSize = Math.min(Number(c.req.query('pageSize') || '20'), 50);
+  const offset = (page - 1) * pageSize;
+
+  if (q.length < 2) {
+    return c.json({ users: [], total: 0, page, pageSize });
+  }
+
+  const searchTerm = `%${q.toLowerCase()}%`;
+
+  const where = {
+    id: { not: userId },
+    isPublic: true,
+    OR: [
+      { displayName: { contains: q, mode: 'insensitive' as const } },
+      { username: { contains: q, mode: 'insensitive' as const } },
+    ],
+  };
+
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        displayName: true,
+        username: true,
+        avatarUrl: true,
+        bio: true,
+        tripsCount: true,
+        countriesCount: true,
+      },
+      skip: offset,
+      take: pageSize,
+      orderBy: { displayName: 'asc' },
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  // Get friend statuses for these users
+  const userIds = users.map((u) => u.id);
+  const friendRequests = await prisma.friendRequest.findMany({
+    where: {
+      OR: [
+        { fromId: userId, toId: { in: userIds } },
+        { fromId: { in: userIds }, toId: userId },
+      ],
+    },
+  });
+
+  const friendStatusMap = new Map<string, string>();
+  for (const fr of friendRequests) {
+    const otherId = fr.fromId === userId ? fr.toId : fr.fromId;
+    if (fr.status === 'accepted') {
+      friendStatusMap.set(otherId, 'accepted');
+    } else if (fr.status === 'pending') {
+      friendStatusMap.set(otherId, fr.fromId === userId ? 'pending_sent' : 'pending_received');
+    }
+  }
+
+  return c.json({
+    users: users.map((u) => ({
+      ...u,
+      friendStatus: friendStatusMap.get(u.id) || 'none',
+    })),
+    total,
+    page,
+    pageSize,
+  });
+});
+
+// GET /api/users/:id/profile — full public profile with trips
+userRoutes.get('/:id/profile', requireAuth, async (c) => {
+  const { userId: currentUserId } = getAuth(c);
+  const targetId = c.req.param('id')!;
+
+  const user = await prisma.user.findUnique({
+    where: { id: targetId },
+    select: {
+      id: true,
+      clerkId: true,
+      email: true,
+      displayName: true,
+      username: true,
+      bio: true,
+      avatarUrl: true,
+      travelerCategory: true,
+      countriesCount: true,
+      tripsCount: true,
+      isPublic: true,
+      createdAt: true,
+      updatedAt: true,
+      ageRange: true,
+    },
+  });
+
+  if (!user) return c.json({ error: 'User not found' }, 404);
+
+  // Friend status
+  const friendRequest = await prisma.friendRequest.findFirst({
+    where: {
+      OR: [
+        { fromId: currentUserId, toId: targetId },
+        { fromId: targetId, toId: currentUserId },
+      ],
+    },
+  });
+
+  let friendStatus = 'none';
+  if (friendRequest) {
+    if (friendRequest.status === 'accepted') friendStatus = 'accepted';
+    else if (friendRequest.status === 'pending') {
+      friendStatus = friendRequest.fromId === currentUserId ? 'pending_sent' : 'pending_received';
+    }
+  }
+
+  // Mutual friends count
+  const myFriendIds = await getAcceptedFriendIds(currentUserId);
+  const theirFriendIds = await getAcceptedFriendIds(targetId);
+  const mutualFriends = myFriendIds.filter((id) => theirFriendIds.includes(id)).length;
+
+  // Public trips
+  const publicTrips = await prisma.trip.findMany({
+    where: { userId: targetId, active: true, isPublic: true },
+    include: { budget: true, accommodation: true, photos: { take: 1, orderBy: { sortOrder: 'asc' } } },
+    orderBy: { startDate: 'desc' },
+    take: 20,
+  });
+
+  return c.json({
+    ...user,
+    friendStatus,
+    mutualFriends,
+    publicTrips,
+  });
+});
+
+// GET /api/users/:id — public profile (simple)
 userRoutes.get('/:id', requireAuth, async (c) => {
   const userId = c.req.param('id')!;
 
@@ -203,7 +343,17 @@ userRoutes.get('/:id', requireAuth, async (c) => {
   if (!user) return c.json({ error: 'User not found' }, 404);
   if (!user.isPublic) return c.json({ error: 'This profile is private' }, 403);
 
-  const { email, clerkId, avatarR2Key, ...publicProfile } = user as Record<string, unknown>;
-  return c.json(publicProfile);
+  return c.json(user);
 });
+
+async function getAcceptedFriendIds(userId: string): Promise<string[]> {
+  const accepted = await prisma.friendRequest.findMany({
+    where: {
+      status: 'accepted',
+      OR: [{ fromId: userId }, { toId: userId }],
+    },
+    select: { fromId: true, toId: true },
+  });
+  return accepted.map((fr) => (fr.fromId === userId ? fr.toId : fr.fromId));
+}
 

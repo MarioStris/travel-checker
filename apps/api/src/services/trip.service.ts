@@ -85,9 +85,9 @@ export async function syncUserStats(
   userId: string,
 ): Promise<void> {
   const [tripCount, uniqueCountries] = await Promise.all([
-    prisma.trip.count({ where: { userId } }),
+    prisma.trip.count({ where: { userId, active: true } }),
     prisma.trip.findMany({
-      where: { userId },
+      where: { userId, active: true },
       select: { countryCode: true },
       distinct: ['countryCode'],
     }),

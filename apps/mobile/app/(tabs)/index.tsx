@@ -1,20 +1,27 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
   FlatList,
   RefreshControl,
-  TouchableOpacity,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTrips } from "@/hooks/useTrips";
 import { useCurrentUser, useUserStats } from "@/hooks/useUser";
 import { AnimatedTripCard } from "@/components/AnimatedTripCard";
 import { StatsCard } from "@/components/StatsCard";
 import { EmptyState } from "@/components/EmptyState";
+import { ContentContainer } from "@/components/ContentContainer";
+import { AppHeader } from "@/components/AppHeader";
+import { Sidebar } from "@/components/Sidebar";
+import { NotificationBanner } from "@/components/NotificationBanner";
 import { TripCardSkeleton, StatsSkeleton } from "@/components/LoadingSkeleton";
 import * as Haptics from "expo-haptics";
+import { useThemeStore } from "@/lib/theme";
 import type { TripDTO } from "@travel-checker/shared/src/types";
 
 export default function HomeScreen() {
@@ -37,71 +44,109 @@ export default function HomeScreen() {
     router.push("/add-trip");
   };
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { colors } = useThemeStore();
   const displayName = user?.displayName ?? "Traveler";
 
-  const renderHeader = () => (
-    <View>
-      <View className="px-4 pt-2 pb-4 flex-row items-center justify-between">
-        <Text className="text-xl font-bold text-gray-900">My Trips</Text>
-        <TouchableOpacity
-          onPress={handleAddTrip}
-          className="bg-sky-500 px-4 py-2 rounded-xl"
-        >
-          <Text className="text-white font-semibold text-sm">+ Add</Text>
-        </TouchableOpacity>
-      </View>
+  const addButton = (
+    <Pressable
+      onPress={handleAddTrip}
+      accessibilityLabel="Add new trip"
+      accessibilityRole="button"
+      style={({ pressed }) => ({
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: pressed ? colors.accentBg : colors.accentBg,
+        borderWidth: 1,
+        borderColor: colors.accentBorder,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 12,
+        gap: 5,
+        minHeight: 40,
+        opacity: pressed ? 0.8 : 1,
+      })}
+    >
+      <Ionicons name="add" size={16} color={colors.accent} />
+      <Text style={{ color: colors.accent, fontWeight: "600", fontSize: 13 }}>Add</Text>
+    </Pressable>
+  );
 
-      {statsLoading || userLoading ? (
-        <StatsSkeleton />
-      ) : stats ? (
-        <StatsCard stats={stats} displayName={displayName} />
-      ) : null}
-    </View>
+  const renderHeader = () => (
+    <>
+      <NotificationBanner />
+      <ContentContainer>
+        {statsLoading || userLoading ? (
+          <StatsSkeleton />
+        ) : stats ? (
+          <StatsCard stats={stats} displayName={displayName} />
+        ) : null}
+      </ContentContainer>
+    </>
   );
 
   if (tripsLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50">
-        {renderHeader()}
-        <View className="px-4">
-          {[1, 2, 3].map((i) => (
-            <TripCardSkeleton key={i} />
-          ))}
-        </View>
-      </SafeAreaView>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <LinearGradient
+          colors={[colors.gradientTop, colors.gradientMid, colors.gradientBottom]}
+          style={{ flex: 1 }}
+        >
+          <SafeAreaView style={{ flex: 1 }}>
+            <AppHeader leftAction={addButton} onAvatarPress={() => setSidebarOpen(true)} />
+            {renderHeader()}
+            <ContentContainer>
+              {[1, 2, 3].map((i) => (
+                <TripCardSkeleton key={i} />
+              ))}
+            </ContentContainer>
+          </SafeAreaView>
+        </LinearGradient>
+        <Sidebar visible={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <FlatList<TripDTO>
-        data={trips ?? []}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <View className="px-4">
-            <AnimatedTripCard trip={item} index={index} />
-          </View>
-        )}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={
-          <EmptyState
-            emoji="✈️"
-            title="No trips yet"
-            description="Start tracking your adventures! Add your first trip and build your travel story."
-            actionLabel="Add Your First Trip"
-            onAction={handleAddTrip}
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <LinearGradient
+        colors={[colors.gradientTop, colors.gradientMid, colors.gradientBottom]}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView style={{ flex: 1 }}>
+          <AppHeader leftAction={addButton} onAvatarPress={() => setSidebarOpen(true)} />
+          <FlatList<TripDTO>
+            data={trips ?? []}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item, index }) => (
+              <ContentContainer>
+                <AnimatedTripCard trip={item} index={index} />
+              </ContentContainer>
+            )}
+            ItemSeparatorComponent={() => <View style={{ height: 2 }} />}
+            ListHeaderComponent={renderHeader}
+            ListEmptyComponent={
+              <EmptyState
+                icon="airplane-outline"
+                title="No trips yet"
+                description="Start tracking your adventures! Add your first trip and build your travel story."
+                actionLabel="Add Your First Trip"
+                onAction={handleAddTrip}
+              />
+            }
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={handleRefresh}
+                tintColor={colors.accent}
+              />
+            }
+            contentContainerStyle={{ paddingBottom: 20, flexGrow: 1 }}
+            showsVerticalScrollIndicator={false}
           />
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={handleRefresh}
-            tintColor="#0ea5e9"
-          />
-        }
-        contentContainerStyle={{ paddingBottom: 20, flexGrow: 1 }}
-        showsVerticalScrollIndicator={false}
-      />
-    </SafeAreaView>
+        </SafeAreaView>
+      </LinearGradient>
+      <Sidebar visible={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    </View>
   );
 }

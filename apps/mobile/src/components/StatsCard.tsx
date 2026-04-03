@@ -1,8 +1,9 @@
 import React from "react";
 import { View, Text } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import type { UserStatsDTO } from "@travel-checker/shared/src/types";
 import { formatCurrency } from "@/lib/formatters";
+import { useThemeStore } from "@/lib/theme";
 
 interface StatsCardProps {
   stats: UserStatsDTO;
@@ -12,40 +13,92 @@ interface StatsCardProps {
 interface StatItemProps {
   value: string | number;
   label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  textColor: string;
+  labelColor: string;
+  iconColor: string;
 }
 
-function StatItem({ value, label }: StatItemProps) {
+function StatItem({ value, label, icon, textColor, labelColor, iconColor }: StatItemProps) {
   return (
-    <View className="items-center flex-1">
-      <Text className="text-2xl font-bold text-white">{value}</Text>
-      <Text className="text-xs text-sky-100 mt-0.5">{label}</Text>
+    <View style={{ alignItems: "center", flex: 1 }}>
+      <Ionicons name={icon} size={18} color={iconColor} style={{ marginBottom: 4 }} />
+      <Text style={{ fontSize: 20, fontWeight: "700", color: textColor }}>{value}</Text>
+      <Text style={{ fontSize: 11, color: labelColor, marginTop: 2 }}>{label}</Text>
     </View>
   );
 }
 
 export function StatsCard({ stats, displayName }: StatsCardProps) {
-  return (
-    <LinearGradient
-      colors={["#0284c7", "#0ea5e9", "#38bdf8"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      className="rounded-2xl p-5 mx-4 mb-4"
-    >
-      <Text className="text-sm text-sky-100 mb-1">Welcome back,</Text>
-      <Text className="text-xl font-bold text-white mb-4">{displayName}</Text>
+  const { colors } = useThemeStore();
 
-      <View className="flex-row">
-        <StatItem value={stats.trips} label="Trips" />
-        <View className="w-px bg-sky-400 opacity-50 my-1" />
-        <StatItem value={stats.countries} label="Countries" />
-        <View className="w-px bg-sky-400 opacity-50 my-1" />
-        <StatItem value={stats.continents} label="Continents" />
-        <View className="w-px bg-sky-400 opacity-50 my-1" />
-        <StatItem
-          value={formatCurrency(stats.totalBudget, "USD", true)}
-          label="Spent"
-        />
+  return (
+    <View
+      style={{
+        marginHorizontal: 16,
+        marginBottom: 16,
+        borderRadius: 16,
+        overflow: "hidden",
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.cardBorder,
+      }}
+    >
+      <View style={{ padding: 20 }}>
+        <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 2 }}>
+          Welcome back,
+        </Text>
+        <Text style={{ fontSize: 20, fontWeight: "700", color: colors.text, marginBottom: 16 }}>
+          {displayName}
+        </Text>
+
+        <View
+          style={{
+            flexDirection: "row",
+            backgroundColor: colors.accentBg,
+            borderRadius: 12,
+            padding: 12,
+            borderWidth: 1,
+            borderColor: colors.accentBorder,
+          }}
+        >
+          <StatItem
+            value={stats.trips}
+            label="Trips"
+            icon="airplane-outline"
+            textColor={colors.text}
+            labelColor={colors.textSecondary}
+            iconColor={colors.accent}
+          />
+          <View style={{ width: 1, backgroundColor: colors.accentBorder, marginVertical: 4 }} />
+          <StatItem
+            value={stats.countries}
+            label="Countries"
+            icon="flag-outline"
+            textColor={colors.text}
+            labelColor={colors.textSecondary}
+            iconColor={colors.accent}
+          />
+          <View style={{ width: 1, backgroundColor: colors.accentBorder, marginVertical: 4 }} />
+          <StatItem
+            value={stats.continents}
+            label="Continents"
+            icon="globe-outline"
+            textColor={colors.text}
+            labelColor={colors.textSecondary}
+            iconColor={colors.accent}
+          />
+          <View style={{ width: 1, backgroundColor: colors.accentBorder, marginVertical: 4 }} />
+          <StatItem
+            value={formatCurrency(stats.totalBudget, "USD", true)}
+            label="Spent"
+            icon="wallet-outline"
+            textColor={colors.text}
+            labelColor={colors.textSecondary}
+            iconColor={colors.accent}
+          />
+        </View>
       </View>
-    </LinearGradient>
+    </View>
   );
 }

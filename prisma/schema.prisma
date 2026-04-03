@@ -27,10 +27,14 @@ model User {
   trips    Trip[]
   comments Comment[]
   likes    Like[]
+  reactions Reaction[]
 
   followedBy Follow[] @relation("following")
   following  Follow[] @relation("follower")
   pushTokens PushToken[]
+
+  sentFriendRequests     FriendRequest[] @relation("FriendRequestFrom")
+  receivedFriendRequests FriendRequest[] @relation("FriendRequestTo")
 
   @@map("users")
 }
@@ -52,6 +56,8 @@ model Trip {
   travelerCategory String    @default("solo") @map("traveler_category") @db.VarChar(30)
   ageRange         String?   @map("age_range") @db.VarChar(10)
   isPublic         Boolean   @default(false) @map("is_public")
+  visibility       String    @default("private") @db.VarChar(10)
+  active           Boolean   @default(true)
   coverPhotoUrl    String?   @map("cover_photo_url") @db.VarChar(500)
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
@@ -62,12 +68,15 @@ model Trip {
   budget        Budget?
   comments      Comment[]
   likes         Like[]
+  reactions     Reaction[]
 
   @@index([userId])
   @@index([countryCode])
   @@index([startDate(sort: Desc)])
   @@index([isPublic])
   @@index([travelerCategory])
+  @@index([active])
+  @@index([visibility])
   @@map("trips")
 }
 
@@ -166,6 +175,39 @@ model Like {
   @@id([userId, tripId])
   @@index([tripId])
   @@map("likes")
+}
+
+model Reaction {
+  id        String   @id @default(uuid()) @db.Uuid
+  tripId    String   @map("trip_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  emoji     String   @db.VarChar(10)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, userId, emoji])
+  @@index([tripId])
+  @@index([userId])
+  @@map("reactions")
+}
+
+model FriendRequest {
+  id        String   @id @default(uuid()) @db.Uuid
+  fromId    String   @map("from_id") @db.Uuid
+  toId      String   @map("to_id") @db.Uuid
+  status    String   @default("pending") @db.VarChar(10)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  fromUser User @relation("FriendRequestFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  toUser   User @relation("FriendRequestTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@unique([fromId, toId])
+  @@index([toId])
+  @@index([status])
+  @@map("friend_requests")
 }
 
 model PushToken {

@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   type TouchableOpacityProps,
 } from "react-native";
+import { useThemeStore } from "@/lib/theme";
 
 type Variant = "primary" | "secondary" | "outline" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
@@ -17,33 +18,10 @@ interface ButtonProps extends TouchableOpacityProps {
   fullWidth?: boolean;
 }
 
-const variantStyles: Record<Variant, { container: string; text: string }> = {
-  primary: {
-    container: "bg-sky-500 active:bg-sky-600",
-    text: "text-white font-semibold",
-  },
-  secondary: {
-    container: "bg-sky-100 active:bg-sky-200",
-    text: "text-sky-700 font-semibold",
-  },
-  outline: {
-    container: "border border-sky-500 bg-transparent active:bg-sky-50",
-    text: "text-sky-500 font-semibold",
-  },
-  ghost: {
-    container: "bg-transparent active:bg-gray-100",
-    text: "text-gray-700 font-medium",
-  },
-  danger: {
-    container: "bg-red-500 active:bg-red-600",
-    text: "text-white font-semibold",
-  },
-};
-
-const sizeStyles: Record<Size, { container: string; text: string }> = {
-  sm: { container: "px-3 py-2 rounded-xl", text: "text-sm" },
-  md: { container: "px-4 py-3 rounded-2xl", text: "text-base" },
-  lg: { container: "px-6 py-4 rounded-2xl", text: "text-lg" },
+const SIZE_STYLES: Record<Size, { px: number; py: number; radius: number; fontSize: number }> = {
+  sm: { px: 12, py: 8, radius: 12, fontSize: 14 },
+  md: { px: 16, py: 12, radius: 16, fontSize: 16 },
+  lg: { px: 24, py: 16, radius: 16, fontSize: 18 },
 };
 
 export function Button({
@@ -53,32 +31,74 @@ export function Button({
   loading = false,
   fullWidth = false,
   disabled,
-  className,
+  style,
   ...props
 }: ButtonProps) {
-  const v = variantStyles[variant];
-  const s = sizeStyles[size];
+  const { colors } = useThemeStore();
+  const s = SIZE_STYLES[size];
   const isDisabled = disabled ?? loading;
+
+  const variants = {
+    primary: {
+      bg: colors.buttonPrimary,
+      text: colors.buttonPrimaryText,
+      border: "transparent",
+    },
+    secondary: {
+      bg: colors.accentBg,
+      text: colors.accent,
+      border: colors.accentBorder,
+    },
+    outline: {
+      bg: "transparent",
+      text: colors.accent,
+      border: colors.accent,
+    },
+    ghost: {
+      bg: "transparent",
+      text: colors.textSecondary,
+      border: "transparent",
+    },
+    danger: {
+      bg: "#ef4444",
+      text: "#ffffff",
+      border: "transparent",
+    },
+  };
+
+  const v = variants[variant];
 
   return (
     <TouchableOpacity
-      className={`
-        ${v.container} ${s.container}
-        ${fullWidth ? "w-full" : "self-start"}
-        ${isDisabled ? "opacity-50" : ""}
-        flex-row items-center justify-center gap-2
-        ${className ?? ""}
-      `}
       disabled={isDisabled}
+      style={[
+        {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          backgroundColor: v.bg,
+          borderWidth: v.border !== "transparent" ? 1 : 0,
+          borderColor: v.border,
+          paddingHorizontal: s.px,
+          paddingVertical: s.py,
+          borderRadius: s.radius,
+          alignSelf: fullWidth ? "stretch" : "flex-start",
+          opacity: isDisabled ? 0.5 : 1,
+        },
+        style,
+      ]}
       {...props}
     >
       {loading && (
         <ActivityIndicator
           size="small"
-          color={variant === "primary" || variant === "danger" ? "#fff" : "#0ea5e9"}
+          color={variant === "primary" || variant === "danger" ? "#fff" : colors.accent}
         />
       )}
-      <Text className={`${v.text} ${s.text}`}>{title}</Text>
+      <Text style={{ color: v.text, fontWeight: "600", fontSize: s.fontSize }}>
+        {title}
+      </Text>
     </TouchableOpacity>
   );
 }
