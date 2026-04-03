@@ -2,287 +2,140 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const USERS = [
-  {
-    clerkId: 'user_seed_001',
-    email: 'ana.kovac@example.com',
-    username: 'ana_travels',
-    displayName: 'Ana Kovač',
-    bio: 'Solo traveler from Croatia. 30+ countries and counting.',
-    travelerCategory: 'solo',
-    ageRange: '25-34',
-    isPublic: true,
-  },
-  {
-    clerkId: 'user_seed_002',
-    email: 'marko.babic@example.com',
-    username: 'marko_adventures',
-    displayName: 'Marko Babić',
-    bio: 'Backpacker and digital nomad. Working from coffee shops worldwide.',
-    travelerCategory: 'backpacker',
-    ageRange: '25-34',
-    isPublic: true,
-  },
-  {
-    clerkId: 'user_seed_003',
-    email: 'petra.novak@example.com',
-    username: 'petra_luxury',
-    displayName: 'Petra Novak',
-    bio: 'Luxury travel enthusiast. Life is too short for bad hotels.',
-    travelerCategory: 'luxury',
-    ageRange: '35-44',
-    isPublic: false,
-  },
-] as const;
-
-const TRIPS_DATA = [
-  {
-    userIndex: 0,
-    title: 'Tokyo Adventure',
-    destination: 'Tokyo, Japan',
-    country: 'Japan',
-    countryCode: 'JP',
-    city: 'Tokyo',
-    latitude: 35.6762,
-    longitude: 139.6503,
-    startDate: new Date('2024-03-10'),
-    endDate: new Date('2024-03-24'),
-    season: 'spring',
-    travelerCategory: 'solo',
-    ageRange: '25-34',
-    isPublic: true,
-    description: 'Spring cherry blossoms and incredible ramen.',
-    budget: { currency: 'EUR', accommodation: 840, food: 420, transport: 320, activities: 280, other: 140, isApproximate: false },
-  },
-  {
-    userIndex: 0,
-    title: 'Bali Retreat',
-    destination: 'Bali, Indonesia',
-    country: 'Indonesia',
-    countryCode: 'ID',
-    city: 'Ubud',
-    latitude: -8.5069,
-    longitude: 115.2625,
-    startDate: new Date('2024-07-05'),
-    endDate: new Date('2024-07-19'),
-    season: 'summer',
-    travelerCategory: 'solo',
-    ageRange: '25-34',
-    isPublic: true,
-    description: 'Yoga, rice terraces, and temple hopping.',
-    budget: { currency: 'EUR', accommodation: 560, food: 280, transport: 180, activities: 220, other: 80, isApproximate: false },
-    accommodation: { name: 'Komaneka at Bisma', type: 'hotel', rating: 5, notes: 'Amazing infinity pool overlooking the jungle' },
-  },
-  {
-    userIndex: 0,
-    title: 'Lisbon Weekend',
-    destination: 'Lisbon, Portugal',
-    country: 'Portugal',
-    countryCode: 'PT',
-    city: 'Lisbon',
-    latitude: 38.7223,
-    longitude: -9.1393,
-    startDate: new Date('2024-09-20'),
-    endDate: new Date('2024-09-23'),
-    season: 'autumn',
-    travelerCategory: 'solo',
-    isPublic: true,
-    description: 'Fado music, pastel de nata, and sunset from Alfama.',
-    budget: { currency: 'EUR', accommodation: 240, food: 120, transport: 80, activities: 60, other: 30, isApproximate: false },
-  },
-  {
-    userIndex: 0,
-    title: 'Kyoto in Autumn',
-    destination: 'Kyoto, Japan',
-    country: 'Japan',
-    countryCode: 'JP',
-    city: 'Kyoto',
-    latitude: 35.0116,
-    longitude: 135.7681,
-    startDate: new Date('2024-11-08'),
-    endDate: new Date('2024-11-15'),
-    season: 'autumn',
-    travelerCategory: 'solo',
-    isPublic: true,
-    description: 'Maple leaves, zen gardens, and endless temples.',
-    budget: { currency: 'EUR', accommodation: 560, food: 280, transport: 160, activities: 180, other: 60, isApproximate: true },
-  },
-  {
-    userIndex: 1,
-    title: 'Colombia Road Trip',
-    destination: 'Medellín, Colombia',
-    country: 'Colombia',
-    countryCode: 'CO',
-    city: 'Medellín',
-    latitude: 6.2518,
-    longitude: -75.5636,
-    startDate: new Date('2024-01-15'),
-    endDate: new Date('2024-02-10'),
-    season: 'winter',
-    travelerCategory: 'backpacker',
-    ageRange: '25-34',
-    isPublic: true,
-    description: 'From Medellín to Cartagena — the eternal spring city to the Caribbean coast.',
-    budget: { currency: 'USD', accommodation: 480, food: 360, transport: 240, activities: 180, other: 120, isApproximate: false },
-    accommodation: { name: 'Selina Medellín', type: 'hostel', rating: 4, notes: 'Great co-working space' },
-  },
-  {
-    userIndex: 1,
-    title: 'Vietnam by Motorbike',
-    destination: 'Ho Chi Minh City, Vietnam',
-    country: 'Vietnam',
-    countryCode: 'VN',
-    city: 'Ho Chi Minh City',
-    latitude: 10.8231,
-    longitude: 106.6297,
-    startDate: new Date('2024-04-01'),
-    endDate: new Date('2024-04-30'),
-    season: 'spring',
-    travelerCategory: 'backpacker',
-    isPublic: true,
-    description: '2000 km from south to north on a Honda Win.',
-    budget: { currency: 'USD', accommodation: 300, food: 240, transport: 400, activities: 160, other: 80, isApproximate: false },
-  },
-  {
-    userIndex: 1,
-    title: 'Morocco Desert',
-    destination: 'Marrakech, Morocco',
-    country: 'Morocco',
-    countryCode: 'MA',
-    city: 'Marrakech',
-    latitude: 31.6295,
-    longitude: -7.9811,
-    startDate: new Date('2024-10-05'),
-    endDate: new Date('2024-10-18'),
-    season: 'autumn',
-    travelerCategory: 'backpacker',
-    isPublic: true,
-    description: 'Sahara nights, Berber hospitality, and medina maze.',
-    budget: { currency: 'EUR', accommodation: 360, food: 200, transport: 280, activities: 240, other: 100, isApproximate: false },
-  },
-  {
-    userIndex: 2,
-    title: 'Maldives Overwater',
-    destination: 'Male, Maldives',
-    country: 'Maldives',
-    countryCode: 'MV',
-    city: 'Male',
-    latitude: 4.1755,
-    longitude: 73.5093,
-    startDate: new Date('2024-02-14'),
-    endDate: new Date('2024-02-21'),
-    season: 'winter',
-    travelerCategory: 'luxury',
-    ageRange: '35-44',
-    isPublic: false,
-    description: 'Overwater bungalow, private pool, pure bliss.',
-    budget: { currency: 'EUR', accommodation: 5600, food: 1200, transport: 800, activities: 600, other: 400, isApproximate: false },
-    accommodation: { name: 'Soneva Jani', type: 'hotel', rating: 5, notes: 'Water villa with retractable roof for stargazing' },
-  },
-  {
-    userIndex: 2,
-    title: 'Dubai Luxury Break',
-    destination: 'Dubai, UAE',
-    country: 'United Arab Emirates',
-    countryCode: 'AE',
-    city: 'Dubai',
-    latitude: 25.2048,
-    longitude: 55.2708,
-    startDate: new Date('2024-12-20'),
-    endDate: new Date('2024-12-27'),
-    season: 'winter',
-    travelerCategory: 'luxury',
-    isPublic: false,
-    description: 'Shopping, skyline, and desert safari.',
-    budget: { currency: 'EUR', accommodation: 3200, food: 800, transport: 400, activities: 600, other: 300, isApproximate: false },
-    accommodation: { name: 'Burj Al Arab', type: 'hotel', rating: 5, notes: 'Helicopter transfer included' },
-  },
-  {
-    userIndex: 0,
-    title: 'Iceland Ring Road',
-    destination: 'Reykjavik, Iceland',
-    country: 'Iceland',
-    countryCode: 'IS',
-    city: 'Reykjavik',
-    latitude: 64.1265,
-    longitude: -21.8174,
-    startDate: new Date('2025-01-10'),
-    endDate: new Date('2025-01-24'),
-    season: 'winter',
-    travelerCategory: 'solo',
-    isPublic: true,
-    description: 'Northern lights, waterfalls, and the silence of snow.',
-    budget: { currency: 'EUR', accommodation: 1400, food: 700, transport: 900, activities: 500, other: 200, isApproximate: true },
-  },
+const destinations = [
+  { title: 'Weekend in Paris', destination: 'Paris', country: 'France', countryCode: 'FR', city: 'Paris', lat: 48.8566, lng: 2.3522, season: 'spring' },
+  { title: 'Barcelona Beach Days', destination: 'Barcelona', country: 'Spain', countryCode: 'ES', city: 'Barcelona', lat: 41.3874, lng: 2.1686, season: 'summer' },
+  { title: 'Rome History Tour', destination: 'Rome', country: 'Italy', countryCode: 'IT', city: 'Rome', lat: 41.9028, lng: 12.4964, season: 'autumn' },
+  { title: 'Amsterdam Canals', destination: 'Amsterdam', country: 'Netherlands', countryCode: 'NL', city: 'Amsterdam', lat: 52.3676, lng: 4.9041, season: 'spring' },
+  { title: 'Prague Old Town', destination: 'Prague', country: 'Czech Republic', countryCode: 'CZ', city: 'Prague', lat: 50.0755, lng: 14.4378, season: 'winter' },
+  { title: 'Lisbon Tram Ride', destination: 'Lisbon', country: 'Portugal', countryCode: 'PT', city: 'Lisbon', lat: 38.7223, lng: -9.1393, season: 'spring' },
+  { title: 'Vienna Coffee Houses', destination: 'Vienna', country: 'Austria', countryCode: 'AT', city: 'Vienna', lat: 48.2082, lng: 16.3738, season: 'autumn' },
+  { title: 'Berlin Wall Walk', destination: 'Berlin', country: 'Germany', countryCode: 'DE', city: 'Berlin', lat: 52.52, lng: 13.405, season: 'summer' },
+  { title: 'Dubrovnik Walls', destination: 'Dubrovnik', country: 'Croatia', countryCode: 'HR', city: 'Dubrovnik', lat: 42.6507, lng: 18.0944, season: 'summer' },
+  { title: 'Split Summer', destination: 'Split', country: 'Croatia', countryCode: 'HR', city: 'Split', lat: 43.5081, lng: 16.4402, season: 'summer' },
+  { title: 'London Museums', destination: 'London', country: 'United Kingdom', countryCode: 'GB', city: 'London', lat: 51.5074, lng: -0.1278, season: 'autumn' },
+  { title: 'Santorini Sunset', destination: 'Santorini', country: 'Greece', countryCode: 'GR', city: 'Santorini', lat: 36.3932, lng: 25.4615, season: 'summer' },
+  { title: 'Istanbul Bazaar', destination: 'Istanbul', country: 'Turkey', countryCode: 'TR', city: 'Istanbul', lat: 41.0082, lng: 28.9784, season: 'spring' },
+  { title: 'Swiss Alps Hiking', destination: 'Interlaken', country: 'Switzerland', countryCode: 'CH', city: 'Interlaken', lat: 46.6863, lng: 7.8632, season: 'summer' },
+  { title: 'Budapest Baths', destination: 'Budapest', country: 'Hungary', countryCode: 'HU', city: 'Budapest', lat: 47.4979, lng: 19.0402, season: 'winter' },
+  { title: 'Copenhagen Bikes', destination: 'Copenhagen', country: 'Denmark', countryCode: 'DK', city: 'Copenhagen', lat: 55.6761, lng: 12.5683, season: 'summer' },
+  { title: 'Tokyo Temples', destination: 'Tokyo', country: 'Japan', countryCode: 'JP', city: 'Tokyo', lat: 35.6762, lng: 139.6503, season: 'spring' },
+  { title: 'Bali Rice Terraces', destination: 'Bali', country: 'Indonesia', countryCode: 'ID', city: 'Ubud', lat: -8.5069, lng: 115.2625, season: 'autumn' },
+  { title: 'New York City Lights', destination: 'New York', country: 'United States', countryCode: 'US', city: 'New York', lat: 40.7128, lng: -74.006, season: 'winter' },
+  { title: 'Marrakech Medina', destination: 'Marrakech', country: 'Morocco', countryCode: 'MA', city: 'Marrakech', lat: 31.6295, lng: -7.9811, season: 'spring' },
+  { title: 'Kyoto in Autumn', destination: 'Kyoto', country: 'Japan', countryCode: 'JP', city: 'Kyoto', lat: 35.0116, lng: 135.7681, season: 'autumn' },
+  { title: 'Iceland Ring Road', destination: 'Reykjavik', country: 'Iceland', countryCode: 'IS', city: 'Reykjavik', lat: 64.1265, lng: -21.8174, season: 'winter' },
+  { title: 'Amalfi Coast Drive', destination: 'Amalfi', country: 'Italy', countryCode: 'IT', city: 'Amalfi', lat: 40.6340, lng: 14.6027, season: 'summer' },
+  { title: 'Scottish Highlands', destination: 'Edinburgh', country: 'United Kingdom', countryCode: 'GB', city: 'Edinburgh', lat: 55.9533, lng: -3.1883, season: 'autumn' },
+  { title: 'Hvar Island Escape', destination: 'Hvar', country: 'Croatia', countryCode: 'HR', city: 'Hvar', lat: 43.1729, lng: 16.4411, season: 'summer' },
 ];
 
-async function main() {
-  console.log('Seeding database...');
+const categories = ['solo', 'couple', 'family', 'backpacker', 'luxury', 'digital_nomad', 'adventure', 'cultural', 'group', 'business'] as const;
+const ageRanges = ['18-24', '25-34', '35-44', '45-54', '55-64'] as const;
 
-  // Clean existing seed data
+const users = [
+  { first: 'Ana', last: 'Horvat', cat: 'solo', age: '25-34' },
+  { first: 'Marko', last: 'Kovac', cat: 'backpacker', age: '25-34' },
+  { first: 'Ivana', last: 'Babic', cat: 'luxury', age: '35-44' },
+  { first: 'Luka', last: 'Maric', cat: 'digital_nomad', age: '25-34' },
+  { first: 'Petra', last: 'Juric', cat: 'couple', age: '35-44' },
+  { first: 'Tomislav', last: 'Novak', cat: 'adventure', age: '45-54' },
+  { first: 'Nina', last: 'Knezevic', cat: 'cultural', age: '25-34' },
+  { first: 'Ivan', last: 'Vukovic', cat: 'solo', age: '18-24' },
+  { first: 'Maja', last: 'Matic', cat: 'family', age: '35-44' },
+  { first: 'Josip', last: 'Tomic', cat: 'backpacker', age: '18-24' },
+  { first: 'Sara', last: 'Bozic', cat: 'luxury', age: '45-54' },
+  { first: 'Ante', last: 'Pavlovic', cat: 'adventure', age: '25-34' },
+  { first: 'Lana', last: 'Radic', cat: 'digital_nomad', age: '25-34' },
+  { first: 'Filip', last: 'Petrovic', cat: 'couple', age: '35-44' },
+  { first: 'Eva', last: 'Simic', cat: 'solo', age: '18-24' },
+  { first: 'Matej', last: 'Lukic', cat: 'cultural', age: '45-54' },
+  { first: 'Tina', last: 'Grgic', cat: 'group', age: '25-34' },
+  { first: 'Domagoj', last: 'Galic', cat: 'business', age: '35-44' },
+  { first: 'Ema', last: 'Popovic', cat: 'backpacker', age: '18-24' },
+  { first: 'Karlo', last: 'Vidovic', cat: 'adventure', age: '25-34' },
+];
+
+function randomDate(start: Date, end: Date) {
+  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+}
+
+async function main() {
+  console.log('Cleaning old seed data...');
   await prisma.user.deleteMany({
-    where: { clerkId: { in: USERS.map((u) => u.clerkId) } },
+    where: { clerkId: { startsWith: 'seed_' } },
   });
 
-  // Create users
-  const createdUsers = await Promise.all(
-    USERS.map((u) => prisma.user.create({ data: u })),
-  );
-  console.log(`Created ${createdUsers.length} users`);
+  console.log('Seeding 20 users with 5 trips each...\n');
 
-  // Create trips with budgets and accommodations
-  let tripCount = 0;
-  for (const tripData of TRIPS_DATA) {
-    const { userIndex, budget, accommodation, ...tripFields } = tripData;
-    const user = createdUsers[userIndex];
+  for (let i = 0; i < 20; i++) {
+    const u = users[i];
+    const username = `${u.first.toLowerCase()}${u.last.toLowerCase()}`;
 
-    const trip = await prisma.trip.create({
-      data: { ...tripFields, userId: user.id },
+    const user = await prisma.user.create({
+      data: {
+        clerkId: `seed_${i.toString().padStart(3, '0')}`,
+        email: `${username}@demo.travelchecker.app`,
+        username,
+        displayName: `${u.first} ${u.last}`,
+        bio: `${u.cat.replace('_', ' ')} traveler from Croatia. Love exploring new places!`,
+        travelerCategory: u.cat,
+        ageRange: u.age,
+        isPublic: true,
+        tripsCount: 5,
+        countriesCount: 0,
+      },
     });
 
-    if (budget) {
-      await prisma.budget.create({ data: { tripId: trip.id, ...budget } });
-    }
+    console.log(`  [${i + 1}/20] ${user.displayName} (@${username})`);
 
-    if (accommodation) {
-      await prisma.accommodation.create({
-        data: { tripId: trip.id, ...accommodation },
+    const countries = new Set<string>();
+    for (let j = 0; j < 5; j++) {
+      const dest = destinations[(i * 5 + j) % destinations.length];
+      const startDate = randomDate(new Date('2024-01-01'), new Date('2026-03-01'));
+      const endDate = new Date(startDate.getTime() + (3 + Math.floor(Math.random() * 10)) * 86400000);
+      countries.add(dest.countryCode);
+
+      await prisma.trip.create({
+        data: {
+          userId: user.id,
+          title: dest.title,
+          description: `Amazing trip to ${dest.destination}. Stayed in ${dest.city}. Highly recommend!`,
+          destination: dest.destination,
+          country: dest.country,
+          countryCode: dest.countryCode,
+          city: dest.city,
+          latitude: dest.lat,
+          longitude: dest.lng,
+          startDate,
+          endDate,
+          season: dest.season,
+          travelerCategory: u.cat,
+          ageRange: u.age,
+          isPublic: true,
+          visibility: 'public',
+          active: true,
+          budget: {
+            create: {
+              currency: 'EUR',
+              accommodation: Math.floor(Math.random() * 500 + 100),
+              food: Math.floor(Math.random() * 300 + 50),
+              transport: Math.floor(Math.random() * 200 + 30),
+              activities: Math.floor(Math.random() * 200 + 20),
+              other: Math.floor(Math.random() * 100),
+            },
+          },
+        },
       });
     }
 
-    tripCount++;
-  }
-
-  console.log(`Created ${tripCount} trips`);
-
-  // Update user stats
-  for (const user of createdUsers) {
-    const [tripsCount, uniqueCountries] = await Promise.all([
-      prisma.trip.count({ where: { userId: user.id } }),
-      prisma.trip.findMany({
-        where: { userId: user.id },
-        select: { countryCode: true },
-        distinct: ['countryCode'],
-      }),
-    ]);
-
     await prisma.user.update({
       where: { id: user.id },
-      data: { tripsCount, countriesCount: uniqueCountries.length },
+      data: { countriesCount: countries.size },
     });
   }
 
-  // Create sample follows (ana follows marko, marko follows ana)
-  await prisma.follow.createMany({
-    data: [
-      { followerId: createdUsers[0].id, followingId: createdUsers[1].id },
-      { followerId: createdUsers[1].id, followingId: createdUsers[0].id },
-    ],
-    skipDuplicates: true,
-  });
-
-  console.log('Follow relationships created');
-  console.log('Seed complete.');
+  console.log('\nDone! 20 users, 100 trips created.');
 }
 
 main()
