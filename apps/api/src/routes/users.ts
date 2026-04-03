@@ -341,7 +341,19 @@ userRoutes.get('/:id', requireAuth, async (c) => {
   if (!user) return c.json({ error: 'User not found' }, 404);
   if (!user.isPublic) return c.json({ error: 'This profile is private' }, 403);
 
-  return c.json(user);
+  return c.json({
+    id: user.id,
+    displayName: user.displayName,
+    username: user.username,
+    bio: user.bio,
+    avatarUrl: user.avatarUrl,
+    travelerCategory: user.travelerCategory,
+    countriesCount: user.countriesCount,
+    tripsCount: user.tripsCount,
+    isPublic: user.isPublic,
+    createdAt: user.createdAt,
+    _count: user._count,
+  });
 });
 
 async function getAcceptedFriendIds(userId: string): Promise<string[]> {
